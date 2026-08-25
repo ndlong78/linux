@@ -156,10 +156,10 @@ def test_mot_url_bi_nhieu_bai_trich_dan_chi_goi_mot_lan(tmp_path: Path):
 
 # --- mã thoát: sai khác không biết ---
 
-def run_main(response_by_url):
+def run_main(response_by_url, *extra: str):
     fetch = FakeFetch(response_by_url)
     return check_links.main(
-        ["--posts", str(FIXTURES), "--retries", "0"], fetch=fetch, sleep=lambda _: None
+        ["--posts", str(FIXTURES), "--retries", "0", *extra], fetch=fetch, sleep=lambda _: None
     )
 
 
@@ -178,3 +178,22 @@ def test_chi_toan_429_thi_thoat_2_chu_khong_phai_1():
 
 def test_khong_toi_duoc_cung_la_2():
     assert run_main(Response(-1, error="Name or service not known")) == 2
+
+
+# --- gắn vào gate: gate phải chạy được ở máy không có mạng ---
+
+def test_allow_unknown_khong_chan_merge_khi_chua_kiem_duoc():
+    """Container không egress vẫn phải chạy được gate — không kiểm được ≠ sai."""
+    assert run_main(Response(429), "--allow-unknown") == 0
+    assert run_main(Response(-1, error="mất mạng"), "--allow-unknown") == 0
+
+
+def test_allow_unknown_van_chan_link_chet():
+    """Cờ này nới đúng một thứ: nó không biến 404 thành chuyện nhỏ."""
+    assert run_main(Response(404), "--allow-unknown") == 1
+    assert run_main(Response(301, "https://x.test/moi"), "--allow-unknown") == 1
+
+
+def test_allow_unknown_bao_to_chu_khong_im_lang(capsys):
+    run_main(Response(429), "--allow-unknown")
+    assert "chưa kiểm được" in capsys.readouterr().err

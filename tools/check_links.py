@@ -17,6 +17,10 @@ Vì vậy công cụ này phân biệt "sai" với "không biết", và mã tho�
 
 CI nên coi mã 1 là đỏ. Coi mã 2 là đỏ hay không là lựa chọn của bạn — nhưng đừng
 coi nó là xanh im lặng.
+
+`--allow-unknown` biến mã 2 thành 0 và vẫn in đủ danh sách. Nó tồn tại để công cụ
+này gắn được vào `npm run gate`: gate phải chạy được ở máy không có mạng, nên
+"không kiểm được" không được chặn merge — nhưng "link chết" thì có.
 """
 from __future__ import annotations
 
@@ -190,7 +194,9 @@ def _polite_fetch(timeout: float):
     return fetch
 
 
-def report(results: dict[str, Result], origins: dict[str, list[str]]) -> int:
+def report(
+    results: dict[str, Result], origins: dict[str, list[str]], allow_unknown: bool = False
+) -> int:
     by_outcome: dict[Outcome, list[Result]] = defaultdict(list)
     for result in results.values():
         by_outcome[result.outcome].append(result)
@@ -214,7 +220,17 @@ def report(results: dict[str, Result], origins: dict[str, list[str]]) -> int:
 
     if must_fix:
         return 1
-    return 2 if unknown else 0
+    if not unknown:
+        return 0
+    if allow_unknown:
+        # Gate gọi công cụ này với cờ đó. Không kiểm được thì nói to là không
+        # kiểm được, chứ không âm thầm báo xanh.
+        print(
+            f"⚠ {unknown} URL chưa kiểm được (mạng?). Chạy `npm run links` ở máy có mạng.",
+            file=sys.stderr,
+        )
+        return 0
+    return 2
 
 
 def main(argv=None, fetch=None, sleep=time.sleep) -> int:
@@ -223,6 +239,11 @@ def main(argv=None, fetch=None, sleep=time.sleep) -> int:
     parser.add_argument("--timeout", type=float, default=20.0)
     parser.add_argument("--retries", type=int, default=2, help="Số lần chờ lại khi gặp 429")
     parser.add_argument("--jobs", type=int, default=4, help="Số host kiểm song song")
+    parser.add_argument(
+        "--allow-unknown",
+        action="store_true",
+        help="Mã 2 (không kết luận được) thành 0 — dùng khi gắn vào gate offline",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -241,7 +262,7 @@ def main(argv=None, fetch=None, sleep=time.sleep) -> int:
         checked = list(
             pool.map(lambda url: check_url(url, fetch, retries=args.retries, sleep=sleep), origins)
         )
-    return report({result.url: result for result in checked}, origins)
+    return report({result.url: result for result in checked}, origins, args.allow_unknown)
 
 
 if __name__ == "__main__":

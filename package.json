@@ -10,8 +10,8 @@
     "predev": "npm run manifest",
     "dev": "wrangler dev",
     "dev:draft": "python3 tools/build_manifest.py --posts content/drafts && wrangler dev",
-    "gate": "python3 tools/validate_content.py && python3 -m pytest test -q && npm test",
-    "gate:draft": "python3 tools/validate_content.py --posts content/drafts --allow-draft",
+    "gate": "python3 tools/validate_content.py && python3 -m pytest test -q && npm test && python3 tools/check_links.py --allow-unknown",
+    "gate:draft": "python3 tools/validate_content.py --posts content/drafts --allow-draft && python3 tools/check_links.py --posts content/drafts --allow-unknown",
     "links": "python3 tools/check_links.py",
     "links:draft": "python3 tools/check_links.py --posts content/drafts"
   },

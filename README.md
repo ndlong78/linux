@@ -66,7 +66,7 @@ một lần không ai đọc là nó bắt đầu sai mà không ai biết.
 ```bash
 npm install
 npm test          # dựng manifest rồi chạy vitest
-npm run gate      # cổng nội dung + pytest + vitest — chạy trước khi merge
+npm run gate      # cổng nội dung + pytest + vitest + kiểm link — chạy trước khi merge
 npm run dev       # wrangler dev
 ```
 
@@ -99,6 +99,16 @@ Gặp 429 thì nó chờ theo đúng `Retry-After` của server rồi hỏi lạ
 
 301/308 bị tính là phải sửa dù link vẫn mở được: nó mở được hôm nay nhờ redirect,
 và sẽ hỏng vào ngày người ta gỡ redirect đi.
+
+### Trong gate
+
+`npm run gate` gọi công cụ này với `--allow-unknown`, tức **link chết chặn merge,
+còn "không kiểm được" thì không**. Nếu không tách hai thứ đó ra thì gate sẽ đỏ ở
+mọi máy đang mất mạng và trong mọi container không có egress — đỏ vì lý do chẳng
+liên quan gì tới nội dung, và đó là kiểu đỏ mà người ta học cách bỏ qua.
+
+Cờ đó không im lặng: nó vẫn in đủ danh sách URL chưa kiểm được kèm một dòng cảnh
+báo. Chạy `npm run links` ở máy có mạng để có kết luận thật.
 
 ## Bản nháp
 
