@@ -4,5 +4,6 @@
   "language": "vi",
   "url": "https://linux.id.vn/",
   "feed_path": "feed.xml",
-  "sitemap_path": "sitemap.xml"
+  "sitemap_path": "sitemap.xml",
+  "noindex": true
 }
