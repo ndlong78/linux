@@ -48,11 +48,29 @@ export function head(page) {
   return lines.join("\n");
 }
 
-export function page({ title, description, canonicalPath, ogType, body }) {
+/**
+ * Nhúng JSON-LD sinh từ metadata.
+ *
+ * Ở bản static, khối này được viết tay trong từng trang cạnh phần hiển thị —
+ * hai bản của cùng một dữ liệu, và chúng lệch nhau thật. Ở đây nó là hàm của
+ * meta.json, nên không còn cửa lệch.
+ *
+ * `</script>` nằm trong một chuỗi bất kỳ sẽ đóng sớm thẻ script, nên escape ở
+ * mức ký tự chứ không tin nội dung đầu vào.
+ */
+export function jsonLd(data) {
+  const json = JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+  return `<script type="application/ld+json" id="ld-meta">${json}</script>`;
+}
+
+export function page({ title, description, canonicalPath, ogType, noindex, headExtra = "", body }) {
   return `<!DOCTYPE html>
 <html lang="${esc(site.language)}">
 <head>
-${head({ title, description, canonicalPath, ogType })}
+${head({ title, description, canonicalPath, ogType, noindex })}${headExtra ? `\n${headExtra}` : ""}
 </head>
 <body>
 <a class="skip-link" href="#main">Đi tới nội dung chính</a>

@@ -18,9 +18,10 @@ export function renderFeed() {
     )
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0"><channel>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>
   <title>${esc(site.title)}</title>
   <link>${esc(site.url)}</link>
+  <atom:link href="${esc(absolute(site.feed_path))}" rel="self" type="application/rss+xml"/>
   <description>${esc(site.description)}</description>
   <language>${esc(site.language)}</language>
 ${items}
@@ -29,10 +30,24 @@ ${items}
 }
 
 export function renderSitemap() {
-  const urls = [absolute(""), ...allPosts().map((p) => absolute(`posts/${p.slug}`))];
+  // `lastmod` lấy từ `last_verified`, không phải `date`: bài của series được
+  // kiểm lại theo bản phát hành mới của distro, và lần kiểm lại đó mới là lần
+  // nội dung thay đổi.
+  const entries = [
+    { loc: absolute(""), lastmod: null },
+    ...allPosts().map((post) => ({
+      loc: absolute(`posts/${post.slug}`),
+      lastmod: post.last_verified || post.date || null,
+    })),
+  ];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((url) => `  <url><loc>${esc(url)}</loc></url>`).join("\n")}
+${entries
+  .map(
+    ({ loc, lastmod }) =>
+      `  <url><loc>${esc(loc)}</loc>${lastmod ? `<lastmod>${esc(lastmod)}</lastmod>` : ""}</url>`,
+  )
+  .join("\n")}
 </urlset>
 `;
 }

@@ -3,6 +3,7 @@
 import { renderHome } from "./render/home.js";
 import { renderPost } from "./render/post.js";
 import { renderFeed, renderSitemap } from "./render/feed.js";
+import { renderNotFound } from "./render/notfound.js";
 import { postBySlug } from "./content.js";
 import site from "../site.json";
 
@@ -45,7 +46,7 @@ export function handle(request) {
     if (html) return respond(html, HTML);
   }
 
-  return respond("<h1>404</h1><p>Không tìm thấy trang.</p>", HTML, 404);
+  return respond(renderNotFound(pathname), HTML, 404);
 }
 
 export default { fetch: (request) => handle(request) };
