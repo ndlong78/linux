@@ -130,6 +130,69 @@ liên quan gì tới nội dung, và đó là kiểu đỏ mà người ta học
 Cờ đó không im lặng: nó vẫn in đủ danh sách URL chưa kiểm được kèm một dòng cảnh
 báo. Chạy `npm run links` ở máy có mạng để có kết luận thật.
 
+## Viết một bài
+
+```bash
+npm run new-post post-002-ten-bai --axis "Networking"
+npm run gate:draft        # kiểm; khung vừa sinh ra đã qua sẵn
+npm run dev:draft         # xem thử trang thật
+```
+
+`new-post` dựng `content/drafts/<slug>/{meta.json,body.html}` với đủ heading bắt
+buộc và số hiệu kế tiếp. Khung đó **qua được cổng ngay** — chủ đích là để lần
+chạy cổng đầu tiên xanh, mọi lần đỏ sau đó đều là một thứ bạn vừa làm, chứ không
+phải mười lỗi có sẵn phải lội qua. Mọi chỗ cần bạn viết đều mang chữ `TODO`.
+
+Cờ hữu ích: `--changes-system` (thêm sẵn mục Gỡ / Hoàn tác mà cổng sẽ đòi),
+`--scope linux-only` (xem dưới).
+
+### Hợp đồng của một bài
+
+`meta.json` — ngoài các trường hiển thị còn có phần chứng minh bài đã được chạy
+thật: `tested_on`, `last_verified`, `changes_system`, và `sources` (≥ 2 nguồn
+`official`/`upstream`, không nhận blog). `title` ≤ 52 ký tự, `description` ≤ 160
+và phải khác `lede`.
+
+`body.html` là **thân bài**, không phải trang: cấm `<h1>`, `<footer>`,
+`class="lede"`, `global-nav`, `related-nav`, `ld-meta` — khung do renderer sinh.
+Bắt buộc có sáu `<h2>`: mục tiêu · yêu cầu tiên quyết · các bước thực hiện ·
+kiểm chứng · lưu ý &amp; khắc phục lỗi · bài tập.
+
+Bốn chỗ hay vướng, tất cả đều có lý do:
+
+- **Dấu `#` đầu dòng trong code block** bị bắt là shell prompt. Chú thích shell
+  phải ra ngoài `<pre>`.
+- **Mọi `<pre>` phải chứa `class="language-*"`**, kể cả khối output —
+  dùng `language-text`.
+- **Mỗi khối `language-bash` cần `data-run-as`** trong 400 ký tự ngay trước nó.
+  Chèn một đoạn văn dài giữa nhãn và khối là đứt.
+- **`changes_system: true` kéo theo một mục Gỡ / Hoàn tác.**
+
+### Bài không có đối ứng FreeBSD
+
+Mặc định mỗi bài phải có ít nhất một `<pre class="bsd">` và nhắc đủ năm tên
+Ubuntu, Xubuntu, Debian, Fedora, FreeBSD. Nhưng phần lớn chủ đề nâng cao —
+systemd unit, cgroup v2, eBPF, SELinux, netplan — không có đối ứng FreeBSD, và
+khi đó tác giả chỉ còn hai lối tệ: nhét một khối gượng ép cho qua cổng, hoặc bỏ
+luôn chủ đề.
+
+Lối thứ ba là khai báo thẳng:
+
+```json
+"scope": "linux-only"
+```
+
+Cổng bỏ hai quy tắc FreeBSD, giữ nguyên mọi quy tắc còn lại — vẫn phải đủ
+Ubuntu, Xubuntu, Debian, Fedora. Khai báo này đúng theo cả hai chiều: bài
+`linux-only` mà vẫn có khối `bsd` hoặc nhãn `code-label bsd` thì đỏ, vì khi đó
+một trong hai thứ sai mà không ai biết là thứ nào.
+
+Vắng trường `scope` nghĩa là `cross-platform`, tức luật chặt nhất — bỏ sót không
+bao giờ trở thành cách lách.
+
+Và nó hiện lên trang bài, không nằm im trong JSON: người đọc FreeBSD thấy ngay
+dòng "Bài này chỉ áp dụng cho Linux" thay vì đọc hết rồi mới phát hiện.
+
 ## Bản nháp
 
 Bài chưa chạy thật xong nằm ở `content/drafts/<slug>/`, không phải `content/posts/`.

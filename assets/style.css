@@ -111,6 +111,15 @@ h2 { font-size: 1.25rem; margin: 2rem 0 0.5rem; }
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.5rem;
 }
+.scope-note {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--linux);
+  background: var(--surface);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .eyebrow {
   margin: 1.25rem 0 0;
   font-size: 0.8rem;

@@ -100,6 +100,19 @@ describe("trang bài", () => {
   });
 });
 
+describe("scope", () => {
+  test("bài linux-only nói ra điều đó ở đầu trang", async () => {
+    // Không hiện lên trang thì người đọc chỉ thấy một bài thiếu FreeBSD, và phải
+    // đọc hết mới biết bài không dành cho mình.
+    const html = await text("/posts/post-003-linux-only");
+    expect(html).toContain("chỉ áp dụng cho Linux");
+  });
+
+  test("bài cross-platform không có ghi chú đó", async () => {
+    expect(await text(POST_1)).not.toContain("scope-note");
+  });
+});
+
 describe("JSON-LD sinh từ meta.json", () => {
   test("khớp đúng metadata, không phải bản viết tay thứ hai", async () => {
     const { data } = structuredData(await text(POST_1));

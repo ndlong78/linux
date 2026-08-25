@@ -1,0 +1,104 @@
+"""Khung bài mới phải qua được cổng nội dung ngay lúc vừa sinh ra.
+
+Đây là test quan trọng nhất của file này, và nó có tác dụng theo cả chiều ngược
+lại: thêm một quy tắc vào validator mà quên cập nhật khung thì test này đỏ —
+chứ không phải người viết bài tiếp theo phát hiện hộ.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+
+import new_post  # noqa: E402
+import validate_content  # noqa: E402
+from content import load_posts  # noqa: E402
+
+
+def make(tmp_path: Path, *args: str) -> Path:
+    drafts = tmp_path / "drafts"
+    assert new_post.main(["post-042-thu-nghiem", "--issue", "42", "--drafts", str(drafts), *args]) == 0
+    return drafts
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        (),
+        ("--scope", "linux-only"),
+        ("--changes-system",),
+        ("--scope", "linux-only", "--changes-system"),
+    ],
+    ids=["mặc-định", "linux-only", "đổi-hệ-thống", "cả-hai"],
+)
+def test_khung_moi_qua_duoc_cong_ngay(tmp_path: Path, args: tuple[str, ...]):
+    drafts = make(tmp_path, *args)
+    assert validate_content.validate(load_posts(drafts), allow_draft=True) == []
+
+
+def test_khung_mac_dinh_khong_qua_duoc_cong_that(tmp_path: Path):
+    """Vẫn là bản nháp: nó không được tự lọt vào production."""
+    drafts = make(tmp_path)
+    assert any("review_status" in e for e in validate_content.validate(load_posts(drafts)))
+
+
+def test_vang_scope_khi_la_cross_platform(tmp_path: Path):
+    """Mặc định không ghi trường scope ra — luật chặt nhất là thứ nên xảy ra khi không ai nghĩ tới."""
+    meta = json.loads((make(tmp_path) / "post-042-thu-nghiem" / "meta.json").read_text(encoding="utf-8"))
+    assert "scope" not in meta
+
+
+def test_linux_only_ghi_scope_va_bo_khoi_bsd(tmp_path: Path):
+    drafts = make(tmp_path, "--scope", "linux-only")
+    meta = json.loads((drafts / "post-042-thu-nghiem" / "meta.json").read_text(encoding="utf-8"))
+    body = (drafts / "post-042-thu-nghiem" / "body.html").read_text(encoding="utf-8")
+    assert meta["scope"] == "linux-only"
+    assert "bsd" not in body
+    assert "FreeBSD" not in body
+
+
+def test_changes_system_kem_san_muc_hoan_tac(tmp_path: Path):
+    body = (make(tmp_path, "--changes-system") / "post-042-thu-nghiem" / "body.html").read_text(
+        encoding="utf-8"
+    )
+    assert "Gỡ / Hoàn tác" in body
+
+
+def test_moi_cho_can_viet_deu_mang_chu_todo(tmp_path: Path):
+    directory = make(tmp_path) / "post-042-thu-nghiem"
+    assert "TODO" in (directory / "body.html").read_text(encoding="utf-8")
+    meta = json.loads((directory / "meta.json").read_text(encoding="utf-8"))
+    assert meta["tested_on"] and "TODO" in meta["tested_on"][0]
+
+
+def test_khong_ghi_de_thu_muc_da_co(tmp_path: Path):
+    drafts = make(tmp_path)
+    truoc = (drafts / "post-042-thu-nghiem" / "meta.json").read_text(encoding="utf-8")
+    assert new_post.main(["post-042-thu-nghiem", "--drafts", str(drafts)]) == 1
+    assert (drafts / "post-042-thu-nghiem" / "meta.json").read_text(encoding="utf-8") == truoc
+
+
+@pytest.mark.parametrize("slug", ["Post-001", "post 001", "post_001", "post-001-", ""])
+def test_slug_sai_dinh_dang_bi_tu_choi(tmp_path: Path, slug: str):
+    assert new_post.main([slug, "--drafts", str(tmp_path / "drafts")]) == 1
+
+
+def test_so_hieu_ke_tiep_tinh_ca_bai_dang_va_bai_nhap(tmp_path: Path, monkeypatch):
+    posts, drafts = tmp_path / "posts", tmp_path / "drafts"
+    for directory, issue in ((posts, 7), (drafts, 12)):
+        import shutil
+
+        shutil.copytree(ROOT / "test" / "fixtures" / "post-001-vi-du", directory / "bai")
+        meta = directory / "bai" / "meta.json"
+        data = json.loads(meta.read_text(encoding="utf-8"))
+        data["issue"], data["slug"] = issue, "bai"
+        meta.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    monkeypatch.setattr(new_post, "POSTS_DIR", posts)
+    monkeypatch.setattr(new_post, "DRAFTS_DIR", drafts)
+    assert new_post.next_issue() == 13

@@ -27,10 +27,15 @@ def manifest() -> dict:
 
 
 def test_moi_bai_mang_du_truong(manifest: dict):
-    assert [post["slug"] for post in manifest["posts"]] == ["post-001-vi-du", "post-002-vi-du"]
+    assert [post["slug"] for post in manifest["posts"]] == [
+        "post-001-vi-du",
+        "post-002-vi-du",
+        "post-003-linux-only",
+    ]
+    optional = {"scope"}  # vắng scope nghĩa là cross-platform, không phải thiếu dữ liệu
     for post in manifest["posts"]:
         assert set(post) == set(build_manifest.FIELDS)
-        assert all(post[field] is not None for field in build_manifest.FIELDS)
+        assert all(post[field] is not None for field in set(build_manifest.FIELDS) - optional)
 
 
 def test_hop_dong_xuat_xu_di_theo_manifest(manifest: dict):

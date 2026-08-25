@@ -13,7 +13,8 @@
     "gate": "python3 tools/validate_content.py && python3 -m pytest test -q && npm test && python3 tools/check_links.py --allow-unknown",
     "gate:draft": "python3 tools/validate_content.py --posts content/drafts --allow-draft && python3 tools/check_links.py --posts content/drafts --allow-unknown",
     "links": "python3 tools/check_links.py",
-    "links:draft": "python3 tools/check_links.py --posts content/drafts"
+    "links:draft": "python3 tools/check_links.py --posts content/drafts",
+    "new-post": "python3 tools/new_post.py"
   },
   "devDependencies": {
     "vitest": "^3.2.4"

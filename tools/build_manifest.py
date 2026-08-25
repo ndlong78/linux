@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # dung bắt buộc phải có — bỏ chúng khỏi manifest là bắt tác giả viết dữ liệu mà
 # không ai đọc.
 FIELDS = (
-    "issue", "date", "axis", "slug", "eyebrow", "title", "lede", "description",
+    "issue", "date", "axis", "scope", "slug", "eyebrow", "title", "lede", "description",
     "tested_on", "last_verified", "changes_system", "sources",
 )
 

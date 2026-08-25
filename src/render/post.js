@@ -25,6 +25,18 @@ function relatedNav(post) {
 </nav>`;
 }
 
+/**
+ * Bài khai `scope: "linux-only"` phải nói ra điều đó ở đầu trang.
+ *
+ * Cổng nội dung nới hai quy tắc FreeBSD cho những bài này; nếu người đọc không
+ * thấy khai báo thì họ chỉ thấy một bài thiếu FreeBSD, và phải đọc hết mới biết
+ * bài không dành cho mình.
+ */
+function scopeNote(post) {
+  if (post.scope !== "linux-only") return "";
+  return '<p class="scope-note" role="note">Bài này chỉ áp dụng cho Linux — chủ đề không có đối ứng trên FreeBSD.</p>';
+}
+
 /** Nguồn official/upstream — validator đòi tối thiểu hai nguồn cho mỗi bài. */
 function sources(post) {
   const list = Array.isArray(post.sources) ? post.sources : [];
@@ -91,6 +103,7 @@ export function renderPost(post) {
     headExtra: structuredData(post),
     body: `<article class="post">
 <div class="masthead"><span class="issue">#${issue} · ${esc(post.date)}</span><span class="axis">${esc(post.axis)}</span></div>
+${scopeNote(post)}
 <header class="post"><p class="eyebrow">${esc(post.eyebrow)}</p><h1>${esc(post.title)}</h1><p class="lede">${esc(post.lede)}</p></header>
 ${body}
 ${sources(post)}

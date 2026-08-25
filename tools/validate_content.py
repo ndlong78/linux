@@ -31,6 +31,16 @@ CODE_LABEL_TOKENS = frozenset({"bsd", "ubuntu", "debian", "fedora", "linux", "sa
 SOURCE_KINDS = frozenset({"official", "upstream"})
 REVIEW_STATUSES = ("draft", "reviewed")
 
+# Phần lớn chủ đề nâng cao — systemd unit, cgroup v2, eBPF, SELinux, netplan —
+# không có đối ứng FreeBSD. Bắt mọi bài phải có khối BSD thì tác giả chỉ còn hai
+# lối: nhét một khối gượng ép cho qua cổng, hoặc bỏ luôn chủ đề. Cả hai đều tệ
+# hơn lối thứ ba: khai báo thẳng ra rằng bài này chỉ dành cho Linux.
+#
+# Khai báo chứ không phải tắt quy tắc. Vắng trường `scope` thì bài bị kiểm theo
+# luật chặt nhất, nên bỏ sót không bao giờ trở thành cách lách.
+DEFAULT_SCOPE = "cross-platform"
+SCOPES = (DEFAULT_SCOPE, "linux-only")
+
 # Trang kết quả tìm kiếm cắt tiêu đề quanh mốc 60 ký tự, và renderer nối thêm
 # tiền tố số hiệu `#001 · ` (7 ký tự) vào trước meta.title — xem src/render/post.js.
 # 52 + 7 = 59, vừa đủ nằm dưới mốc đó. Phần bị cắt luôn là phần đuôi, tức là phần
@@ -139,6 +149,9 @@ def _check_meta(post: Post, errors: list[str], allow_draft: bool) -> None:
             "phần vượt sẽ bị cắt ở trang kết quả tìm kiếm"
         )
 
+    if meta.get("scope", DEFAULT_SCOPE) not in SCOPES:
+        say(f"meta.scope phải thuộc {list(SCOPES)}")
+
     sources = meta.get("sources")
     if not isinstance(sources, list) or len(sources) < 2:
         say("meta.sources cần ít nhất 2 nguồn official/upstream")
@@ -163,6 +176,7 @@ def _check_meta(post: Post, errors: list[str], allow_draft: bool) -> None:
 def _check_body(post: Post, errors: list[str]) -> None:
     say = lambda msg: errors.append(f"{post.slug}: {msg}")  # noqa: E731
     body = post.body
+    linux_only = post.meta.get("scope", DEFAULT_SCOPE) == "linux-only"
 
     for pattern, label in FORBIDDEN_IN_BODY:
         if pattern.search(body):
@@ -180,6 +194,8 @@ def _check_body(post: Post, errors: list[str]) -> None:
     for token in CODE_LABEL_RE.findall(body):
         if token.lower() not in CODE_LABEL_TOKENS:
             say(f"code-label token không hợp lệ: {token}")
+        if linux_only and token.lower() == "bsd":
+            say("scope=linux-only nhưng vẫn có nhãn code-label bsd")
 
     blocks = list(PRE_RE.finditer(body))
     if not blocks:
@@ -211,11 +227,24 @@ def _check_body(post: Post, errors: list[str]) -> None:
 
     # Đây là quy tắc đã chặn bài #055 của kho tiền nhiệm: bài có nhãn
     # `code-label bsd` nhưng không có <pre class="bsd"> nào. Hai chỗ khác nhau.
-    if freebsd_blocks == 0:
+    if linux_only:
+        # Khai báo phải đúng cả hai chiều. Bài tự nhận chỉ dành cho Linux mà vẫn
+        # có khối BSD thì một trong hai thứ đó sai, và không ai biết là thứ nào.
+        if freebsd_blocks:
+            say('scope=linux-only nhưng vẫn có <pre class="bsd"> — bỏ khối đó hoặc bỏ khai báo')
+    elif freebsd_blocks == 0:
         say('thiếu code block FreeBSD — cần ít nhất một <pre class="bsd">')
 
     visible = _visible_text(body)
-    missing = [name for name, pattern in DISTRO_PATTERNS.items() if not re.search(pattern, visible)]
+    # Bài linux-only vẫn phải chạy được trên cả bốn distro Linux của series; chỉ
+    # riêng FreeBSD được miễn. Nhắc tên FreeBSD trong phần văn xuôi thì vẫn được
+    # — nói "FreeBSD không có thứ này" chính là thông tin người đọc cần.
+    patterns = {
+        name: pattern
+        for name, pattern in DISTRO_PATTERNS.items()
+        if not (linux_only and name == "FreeBSD")
+    }
+    missing = [name for name, pattern in patterns.items() if not re.search(pattern, visible)]
     if missing:
         say(f"thân bài chưa nhắc tới: {', '.join(missing)}")
 

@@ -168,6 +168,83 @@ def test_issue_trung_giua_hai_bai(workspace: Path):
     assert any("trùng với" in e for e in run(workspace))
 
 
+# --- scope: chủ đề không có đối ứng FreeBSD ---
+
+LINUX_ONLY = "post-003-linux-only"
+
+
+@pytest.fixture()
+def linux_only(tmp_path: Path) -> Path:
+    posts = tmp_path / "posts"
+    posts.mkdir()
+    shutil.copytree(FIXTURES / LINUX_ONLY, posts / LINUX_ONLY)
+    return posts
+
+
+def edit(posts: Path, slug: str, **changes) -> None:
+    path = posts / slug / "meta.json"
+    meta = json.loads(path.read_text(encoding="utf-8"))
+    meta.update(changes)
+    path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def test_linux_only_khong_can_khoi_freebsd(linux_only: Path):
+    assert run(linux_only) == []
+
+
+def test_vang_scope_thi_van_bi_kiem_theo_luat_chat(linux_only: Path):
+    """Bỏ sót khai báo không bao giờ được trở thành cách lách."""
+    path = linux_only / LINUX_ONLY / "meta.json"
+    meta = json.loads(path.read_text(encoding="utf-8"))
+    del meta["scope"]
+    path.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+    errors = run(linux_only)
+    assert any("thiếu code block FreeBSD" in e for e in errors)
+    assert any("chưa nhắc tới: FreeBSD" in e or "FreeBSD" in e for e in errors)
+
+
+def test_scope_la_bi_tu_choi(linux_only: Path):
+    edit(linux_only, LINUX_ONLY, scope="chi-freebsd")
+    assert any("meta.scope phải thuộc" in e for e in run(linux_only))
+
+
+def test_linux_only_ma_van_co_khoi_bsd_la_mau_thuan(linux_only: Path):
+    """Khai báo phải đúng cả hai chiều, nếu không không ai biết bên nào sai."""
+    path = linux_only / LINUX_ONLY / "body.html"
+    path.write_text(
+        path.read_text(encoding="utf-8")
+        + '<pre class="bsd"><code class="language-bash">ifconfig -a</code></pre>',
+        encoding="utf-8",
+    )
+    assert any("vẫn có <pre class=\"bsd\">" in e for e in run(linux_only))
+
+
+def test_linux_only_ma_van_co_nhan_bsd_la_mau_thuan(linux_only: Path):
+    path = linux_only / LINUX_ONLY / "body.html"
+    path.write_text(
+        path.read_text(encoding="utf-8") + '<p class="code-label bsd">FreeBSD</p>',
+        encoding="utf-8",
+    )
+    assert any("nhãn code-label bsd" in e for e in run(linux_only))
+
+
+@pytest.mark.parametrize("distro", ["Ubuntu", "Xubuntu", "Debian", "Fedora"])
+def test_linux_only_van_phai_du_bon_distro_linux(linux_only: Path, distro: str):
+    """Nới đúng hai quy tắc FreeBSD, không nới gì khác."""
+    path = linux_only / LINUX_ONLY / "body.html"
+    path.write_text(path.read_text(encoding="utf-8").replace(distro, "Khác"), encoding="utf-8")
+    assert any(f"chưa nhắc tới: {distro}" in e for e in run(linux_only))
+
+
+def test_linux_only_van_phai_du_heading(linux_only: Path):
+    path = linux_only / LINUX_ONLY / "body.html"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace("<h2>Kiểm chứng</h2>", "<h2>Gì đó</h2>"),
+        encoding="utf-8",
+    )
+    assert any("thiếu heading bắt buộc" in e for e in run(linux_only))
+
+
 # --- fragment: ranh giới nội dung/khung ---
 
 @pytest.mark.parametrize(
