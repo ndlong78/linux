@@ -8,6 +8,7 @@ một fetcher, nên test chỉ việc đưa vào một fetcher giả.
 from __future__ import annotations
 
 import json
+from datetime import date, timedelta
 import shutil
 import sys
 from pathlib import Path
@@ -197,3 +198,125 @@ def test_allow_unknown_van_chan_link_chet():
 def test_allow_unknown_bao_to_chu_khong_im_lang(capsys):
     run_main(Response(429), "--allow-unknown")
     assert "chưa kiểm được" in capsys.readouterr().err
+
+
+# --- cache: hỏi lại cái cần hỏi, bỏ qua cái vừa hỏi ---
+
+# Sau `last_verified` của fixture (2026-09-01 và 2026-09-02): một lần kiểm diễn
+# ra trước ngày bài được rà lại thì đằng nào cũng phải hỏi lại, nên lấy mốc đó
+# làm "hôm nay" thì mọi test dưới đây mới nói đúng thứ nó định nói.
+TODAY = date(2026, 9, 10)
+
+
+def stamp(days_ago: int) -> str:
+    return (TODAY - timedelta(days=days_ago)).isoformat()
+
+
+def entry(days_ago: int) -> dict:
+    return {"checked_at": stamp(days_ago), "status": "ok"}
+
+
+def test_cache_con_han_thi_bo_qua():
+    assert check_links.is_fresh(entry(1), today=TODAY, max_age_days=14, last_verified=stamp(30))
+
+
+def test_cache_qua_han_thi_hoi_lai():
+    """Link chết mà không ai đụng vào bài thì vẫn phải bị phát hiện."""
+    assert not check_links.is_fresh(
+        entry(15), today=TODAY, max_age_days=14, last_verified=stamp(30)
+    )
+
+
+def test_last_verified_moi_hon_lan_kiem_thi_hoi_lai():
+    """Đẩy last_verified lên nghĩa là tác giả vừa rà lại bài — nguồn phải hỏi lại."""
+    assert not check_links.is_fresh(entry(3), today=TODAY, max_age_days=14, last_verified=stamp(2))
+    assert check_links.is_fresh(entry(3), today=TODAY, max_age_days=14, last_verified=stamp(4))
+
+
+@pytest.mark.parametrize(
+    "entry", [None, {}, {"checked_at": "hôm qua"}, {"checked_at": "2027-12-31"}]
+)
+def test_cache_hong_hoac_o_tuong_lai_thi_khong_tin(entry):
+    assert not check_links.is_fresh(entry, today=TODAY, max_age_days=14, last_verified="")
+
+
+def test_lan_hai_khong_goi_mang_nua(tmp_path: Path):
+    cache = tmp_path / "cache.json"
+    fetch = FakeFetch(Response(200))
+    args = ["--posts", str(FIXTURES), "--retries", "0", "--cache", str(cache)]
+
+    assert check_links.main(args, fetch=fetch, sleep=lambda _: None, today=TODAY) == 0
+    goi_lan_dau = len(fetch.calls)
+    assert goi_lan_dau > 0
+
+    fetch_lan_hai = FakeFetch(Response(200))
+    assert check_links.main(args, fetch=fetch_lan_hai, sleep=lambda _: None, today=TODAY) == 0
+    assert fetch_lan_hai.calls == [], "lần hai phải lấy hết từ cache"
+
+
+def test_no_cache_thi_hoi_lai_bang_het(tmp_path: Path):
+    cache = tmp_path / "cache.json"
+    args = ["--posts", str(FIXTURES), "--retries", "0", "--cache", str(cache)]
+    check_links.main(args, fetch=FakeFetch(Response(200)), sleep=lambda _: None, today=TODAY)
+
+    fetch = FakeFetch(Response(200))
+    check_links.main(
+        [*args, "--no-cache"], fetch=fetch, sleep=lambda _: None, today=TODAY
+    )
+    assert fetch.calls, "--no-cache phải bỏ qua cache"
+
+
+def test_khong_bao_gio_cache_mot_that_bai(tmp_path: Path):
+    """Cache một 404 là để nó tự khỏi sau vài ngày — đúng thứ công cụ này chặn."""
+    cache = tmp_path / "cache.json"
+    args = ["--posts", str(FIXTURES), "--retries", "0", "--cache", str(cache)]
+
+    assert check_links.main(args, fetch=FakeFetch(Response(404)), sleep=lambda _: None, today=TODAY) == 1
+    assert check_links.load_cache(cache) == {}
+
+    fetch = FakeFetch(Response(404))
+    assert check_links.main(args, fetch=fetch, sleep=lambda _: None, today=TODAY) == 1
+    assert fetch.calls, "vẫn phải hỏi lại, không được im lặng nhờ cache"
+
+
+def test_429_cung_khong_duoc_cache(tmp_path: Path):
+    cache = tmp_path / "cache.json"
+    args = ["--posts", str(FIXTURES), "--retries", "0", "--cache", str(cache)]
+    check_links.main(args, fetch=FakeFetch(Response(429)), sleep=lambda _: None, today=TODAY)
+    assert check_links.load_cache(cache) == {}
+
+
+def test_url_khong_con_duoc_trich_dan_thi_roi_khoi_cache(tmp_path: Path):
+    cache = tmp_path / "cache.json"
+    check_links.save_cache(cache, {"https://khong-ai-dung.test/x": entry(0)})
+    args = ["--posts", str(FIXTURES), "--retries", "0", "--cache", str(cache)]
+    check_links.main(args, fetch=FakeFetch(Response(200)), sleep=lambda _: None, today=TODAY)
+    assert "https://khong-ai-dung.test/x" not in check_links.load_cache(cache)
+
+
+def test_cache_hong_thi_coi_nhu_khong_co(tmp_path: Path):
+    cache = tmp_path / "cache.json"
+    cache.write_text("{khong-phai-json}", encoding="utf-8")
+    assert check_links.load_cache(cache) == {}
+
+
+def test_cache_khac_version_thi_bo(tmp_path: Path):
+    cache = tmp_path / "cache.json"
+    cache.write_text(json.dumps({"version": 999, "urls": {"a": {}}}), encoding="utf-8")
+    assert check_links.load_cache(cache) == {}
+
+
+def test_latest_verified_lay_ngay_moi_nhat(tmp_path: Path):
+    posts = tmp_path / "posts"
+    posts.mkdir()
+    for slug, stamp in (("post-001-vi-du", "2026-01-01"), ("post-002-khac", "2026-07-07")):
+        shutil.copytree(FIXTURES / "post-001-vi-du", posts / slug)
+        meta = posts / slug / "meta.json"
+        data = json.loads(meta.read_text(encoding="utf-8"))
+        data["slug"], data["last_verified"] = slug, stamp
+        meta.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+    from content import load_posts
+
+    newest = check_links.latest_verified(load_posts(posts))
+    assert newest["https://man7.org/linux/man-pages/man8/ip.8.html"] == "2026-07-07"

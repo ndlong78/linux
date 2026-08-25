@@ -4,3 +4,4 @@ content/manifest.json
 __pycache__/
 .pytest_cache/
 test/fixtures/manifest.json
+content/.link-cache.json

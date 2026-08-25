@@ -100,6 +100,26 @@ Gặp 429 thì nó chờ theo đúng `Retry-After` của server rồi hỏi lạ
 301/308 bị tính là phải sửa dù link vẫn mở được: nó mở được hôm nay nhờ redirect,
 và sẽ hỏng vào ngày người ta gỡ redirect đi.
 
+### Cache
+
+Kiểm lại toàn bộ nguồn ở mỗi lần chạy gate là thứ không dùng được khi kho lớn
+dần: công cụ đợi 1 giây giữa hai request tới cùng một host để không tự chuốc
+429, nên vài chục bài là vài phút. Kết quả "sống" vì thế được ghi lại ở
+`content/.link-cache.json` (ngoài git — nó là quan sát về thế giới bên ngoài
+tại một thời điểm, không tái tạo được từ mã nguồn).
+
+Một URL chỉ được bỏ qua khi **cả hai** điều kiện cùng đúng:
+
+- lần kiểm gần nhất chưa quá `--max-age` ngày (mặc định 14) — link chết mà không
+  ai đụng vào bài thì vẫn phải bị phát hiện;
+- lần kiểm đó diễn ra **sau** `last_verified` của mọi bài trích dẫn nó — đẩy
+  `last_verified` lên nghĩa là tác giả vừa rà lại bài, nguồn của nó phải được
+  hỏi lại chứ không lấy kết quả cũ.
+
+Thất bại thì **không bao giờ được cache**: 404, 301 và 429 đều bị xoá khỏi cache
+để lần sau hỏi lại. Cache một thất bại là để nó tự khỏi sau vài ngày mà không ai
+hỏi lại — đúng thứ công cụ này sinh ra để chặn. `--no-cache` hỏi lại tất cả.
+
 ### Trong gate
 
 `npm run gate` gọi công cụ này với `--allow-unknown`, tức **link chết chặn merge,

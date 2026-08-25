@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import re
 import sys
 import time
@@ -35,7 +36,7 @@ import urllib.request
 from collections import defaultdict
 from dataclasses import dataclass
 from email.utils import parsedate_to_datetime
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from threading import Lock
@@ -51,6 +52,12 @@ HREF_RE = re.compile(r'href=["\'](https?://[^"\'\s]+)["\']', re.IGNORECASE)
 # nhất để tự chuốc lấy 429 rồi kết luận sai về chính link của mình.
 HOST_INTERVAL = 1.0
 MAX_BACKOFF = 60.0
+
+# Cache là artifact về thế giới bên ngoài tại một thời điểm, không tái tạo được
+# từ git — nhưng cũng không phải nguồn sự thật, nên nó nằm ngoài git như manifest.
+CACHE_PATH = Path(__file__).resolve().parents[1] / "content" / ".link-cache.json"
+CACHE_VERSION = 1
+MAX_AGE_DAYS = 14
 
 
 class Outcome(Enum):
@@ -158,6 +165,66 @@ def _urllib_fetch(url: str, method: str, timeout: float) -> Response:
         return Response(-1, error=str(reason))
 
 
+def load_cache(path: Path) -> dict[str, dict]:
+    """Chỉ những URL từng sống mới nằm ở đây — không bao giờ cache một thất bại."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(data, dict) or data.get("version") != CACHE_VERSION:
+        return {}
+    urls = data.get("urls")
+    return urls if isinstance(urls, dict) else {}
+
+
+def save_cache(path: Path, urls: dict[str, dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"version": CACHE_VERSION, "urls": urls}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def is_fresh(entry: dict | None, *, today: date, max_age_days: int, last_verified: str) -> bool:
+    """Bỏ qua một URL khi và chỉ khi hai điều kiện cùng đúng.
+
+    Một: lần kiểm gần nhất chưa quá hạn. Link chết mà không ai đụng vào bài thì
+    vẫn phải bị phát hiện, nên cache có hạn dùng chứ không vĩnh viễn.
+
+    Hai: lần kiểm đó diễn ra sau khi bài được kiểm lại lần cuối. Đẩy
+    `last_verified` lên nghĩa là tác giả vừa rà lại bài — nguồn của nó phải được
+    hỏi lại, không được lấy kết quả cũ.
+    """
+    if not entry:
+        return False
+    try:
+        checked_at = date.fromisoformat(str(entry.get("checked_at", "")))
+    except ValueError:
+        return False
+    if checked_at > today or today - checked_at > timedelta(days=max_age_days):
+        return False
+    return checked_at.isoformat() >= last_verified
+
+
+def latest_verified(posts: list[Post]) -> dict[str, str]:
+    """URL → `last_verified` mới nhất trong số các bài trích dẫn nó."""
+    newest: dict[str, str] = defaultdict(str)
+    for post in posts:
+        stamp = str(post.meta.get("last_verified", ""))
+        for url in _urls_of(post):
+            newest[url] = max(newest[url], stamp)
+    return dict(newest)
+
+
+def _urls_of(post: Post) -> list[str]:
+    urls = []
+    sources = post.meta.get("sources")
+    if isinstance(sources, list):
+        urls += [s["url"] for s in sources if isinstance(s, dict) and isinstance(s.get("url"), str)]
+    urls += [html.unescape(match) for match in HREF_RE.findall(post.body)]
+    return urls
+
+
 def collect_urls(posts: list[Post]) -> dict[str, list[str]]:
     """URL → những chỗ nó xuất hiện. Một URL bị ba bài trích dẫn vẫn chỉ gọi mạng một lần."""
     found: dict[str, list[str]] = defaultdict(list)
@@ -195,7 +262,10 @@ def _polite_fetch(timeout: float):
 
 
 def report(
-    results: dict[str, Result], origins: dict[str, list[str]], allow_unknown: bool = False
+    results: dict[str, Result],
+    origins: dict[str, list[str]],
+    allow_unknown: bool = False,
+    cached: int = 0,
 ) -> int:
     by_outcome: dict[Outcome, list[Result]] = defaultdict(list)
     for result in results.values():
@@ -216,7 +286,8 @@ def report(
     ok = len(by_outcome.get(Outcome.OK, []))
     must_fix = sum(len(by_outcome.get(outcome, [])) for outcome in MUST_FIX)
     unknown = sum(len(by_outcome.get(outcome, [])) for outcome in INCONCLUSIVE)
-    print(f"{ok} sống · {must_fix} phải sửa · {unknown} không kết luận được")
+    from_cache = f" ({cached} lấy từ cache)" if cached else ""
+    print(f"{ok} sống{from_cache} · {must_fix} phải sửa · {unknown} không kết luận được")
 
     if must_fix:
         return 1
@@ -233,12 +304,20 @@ def report(
     return 2
 
 
-def main(argv=None, fetch=None, sleep=time.sleep) -> int:
+def main(argv=None, fetch=None, sleep=time.sleep, today: date | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--posts", default=None, help="Thư mục bài (mặc định content/posts)")
     parser.add_argument("--timeout", type=float, default=20.0)
     parser.add_argument("--retries", type=int, default=2, help="Số lần chờ lại khi gặp 429")
     parser.add_argument("--jobs", type=int, default=4, help="Số host kiểm song song")
+    parser.add_argument("--cache", default=str(CACHE_PATH), help="File cache kết quả")
+    parser.add_argument("--no-cache", action="store_true", help="Bỏ qua cache, hỏi lại tất cả")
+    parser.add_argument(
+        "--max-age",
+        type=int,
+        default=MAX_AGE_DAYS,
+        help=f"Số ngày một kết quả 'sống' còn dùng lại được (mặc định {MAX_AGE_DAYS})",
+    )
     parser.add_argument(
         "--allow-unknown",
         action="store_true",
@@ -257,12 +336,43 @@ def main(argv=None, fetch=None, sleep=time.sleep) -> int:
         print("Không có URL nào để kiểm.")
         return 0
 
+    today = today or date.today()
+    cache_path = Path(args.cache)
+    cache = {} if args.no_cache else load_cache(cache_path)
+    verified = latest_verified(posts)
+
+    results: dict[str, Result] = {}
+    pending: list[str] = []
+    for url in origins:
+        entry = cache.get(url)
+        if is_fresh(
+            entry, today=today, max_age_days=args.max_age, last_verified=verified.get(url, "")
+        ):
+            results[url] = Result(url, Outcome.OK, f"cache: kiểm ngày {entry['checked_at']}")
+        else:
+            pending.append(url)
+
     fetch = fetch or _polite_fetch(args.timeout)
     with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         checked = list(
-            pool.map(lambda url: check_url(url, fetch, retries=args.retries, sleep=sleep), origins)
+            pool.map(lambda url: check_url(url, fetch, retries=args.retries, sleep=sleep), pending)
         )
-    return report({result.url: result for result in checked}, origins, args.allow_unknown)
+
+    stamp = today.isoformat()
+    for result in checked:
+        results[result.url] = result
+        # Chỉ ghi lại cái đã sống. Cache một thất bại là để nó tự khỏi sau vài
+        # ngày mà không ai hỏi lại — đúng thứ công cụ này sinh ra để chặn.
+        if result.outcome is Outcome.OK:
+            cache[result.url] = {"checked_at": stamp, "status": "ok"}
+        else:
+            cache.pop(result.url, None)
+
+    if not args.no_cache:
+        # Giữ cache gọn: URL không còn được bài nào trích dẫn thì bỏ.
+        save_cache(cache_path, {url: entry for url, entry in cache.items() if url in origins})
+
+    return report(results, origins, args.allow_unknown, cached=len(results) - len(checked))
 
 
 if __name__ == "__main__":
