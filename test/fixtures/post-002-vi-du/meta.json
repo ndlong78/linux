@@ -1,6 +1,6 @@
 {
   "issue": 2,
-  "date": "2026-09-02",
+  "date": "2026-06-02",
   "axis": "Networking",
   "slug": "post-002-vi-du",
   "eyebrow": "Networking · Ví dụ",
@@ -8,11 +8,22 @@
   "lede": "Bài thứ hai tồn tại để related-nav có hàng xóm thật mà kiểm, thay vì luôn rơi vào nhánh rỗng.",
   "description": "Fixture thứ hai cùng trục Networking: đủ để kiểm liên kết bài trước/bài sau và thứ tự trong feed.",
   "review_status": "reviewed",
-  "tested_on": ["Ubuntu 24.04 LTS", "FreeBSD 14.4-RELEASE"],
-  "last_verified": "2026-09-02",
+  "tested_on": [
+    "Ubuntu 24.04 LTS",
+    "FreeBSD 14.4-RELEASE"
+  ],
+  "last_verified": "2026-06-02",
   "changes_system": false,
   "sources": [
-    {"title": "man7.org — ip-route(8)", "url": "https://man7.org/linux/man-pages/man8/ip-route.8.html", "kind": "official"},
-    {"title": "FreeBSD Handbook — Advanced Networking", "url": "https://docs.freebsd.org/en/books/handbook/advanced-networking/", "kind": "upstream"}
+    {
+      "title": "man7.org — ip-route(8)",
+      "url": "https://man7.org/linux/man-pages/man8/ip-route.8.html",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Handbook — Advanced Networking",
+      "url": "https://docs.freebsd.org/en/books/handbook/advanced-networking/",
+      "kind": "upstream"
+    }
   ]
 }

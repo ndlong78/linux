@@ -39,7 +39,7 @@ def test_hop_dong_xuat_xu_di_theo_manifest(manifest: dict):
     assert len(post["sources"]) == 2
     assert post["sources"][0]["kind"] in {"official", "upstream"}
     assert post["tested_on"] == ["Ubuntu 24.04 LTS", "FreeBSD 14.4-RELEASE"]
-    assert post["last_verified"] == "2026-09-01"
+    assert post["last_verified"] == "2026-06-01"
     assert post["changes_system"] is False
 
 

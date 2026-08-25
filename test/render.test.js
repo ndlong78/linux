@@ -92,7 +92,7 @@ describe("trang bài", () => {
   test("xuất xứ: đã kiểm trên đâu, kiểm lần cuối bao giờ", async () => {
     const html = await text(POST_1);
     expect(html).toContain("Ubuntu 24.04 LTS, FreeBSD 14.4-RELEASE");
-    expect(html).toContain('<time datetime="2026-09-01">');
+    expect(html).toContain('<time datetime="2026-06-01">');
   });
 
   test("changes_system=false thì không có cảnh báo thay đổi hệ thống", async () => {
@@ -104,8 +104,8 @@ describe("JSON-LD sinh từ meta.json", () => {
   test("khớp đúng metadata, không phải bản viết tay thứ hai", async () => {
     const { data } = structuredData(await text(POST_1));
     expect(data.headline).toBe("Bài ví dụ dùng cho test cổng nội dung");
-    expect(data.datePublished).toBe("2026-09-01");
-    expect(data.dateModified).toBe("2026-09-01");
+    expect(data.datePublished).toBe("2026-06-01");
+    expect(data.dateModified).toBe("2026-06-01");
     expect(data.inLanguage).toBe(site.language);
     expect(data.url).toBe(`${site.url}posts/post-001-vi-du`);
     expect(data.citation).toHaveLength(2);
@@ -154,7 +154,7 @@ describe("feed và sitemap", () => {
   test("sitemap lấy lastmod từ last_verified", async () => {
     const xml = await text("/sitemap.xml");
     expect(xml).toContain(
-      `<url><loc>${site.url}posts/post-002-vi-du</loc><lastmod>2026-09-02</lastmod></url>`,
+      `<url><loc>${site.url}posts/post-002-vi-du</loc><lastmod>2026-06-02</lastmod></url>`,
     );
   });
 });

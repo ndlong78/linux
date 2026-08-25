@@ -25,6 +25,19 @@ FIXTURES = ROOT / "test" / "fixtures"
 SLUG = "post-001-vi-du"
 
 
+@pytest.fixture(autouse=True)
+def cache_khong_dung_cho_that(tmp_path, monkeypatch):
+    """Không test nào được đụng vào cache thật của máy đang chạy.
+
+    Lỗi này đã xảy ra: test gọi main() không truyền --cache, ghi URL của fixture
+    vào `content/.link-cache.json` của repo, rồi lần chạy sau đọc lại chính nó và
+    bỏ qua phần gọi mạng — bộ test xanh hay đỏ tuỳ theo một file nằm ngoài git.
+    Nó ẩn được lâu vì fixture từng để `last_verified` ở tương lai, khiến mọi entry
+    cache luôn bị coi là cũ hơn ngày rà bài.
+    """
+    monkeypatch.setattr(check_links, "CACHE_PATH", tmp_path / "cache-cua-test.json")
+
+
 class FakeFetch:
     """Trả lời theo kịch bản dựng sẵn và ghi lại từng lần được gọi."""
 
@@ -158,9 +171,12 @@ def test_mot_url_bi_nhieu_bai_trich_dan_chi_goi_mot_lan(tmp_path: Path):
 # --- mã thoát: sai khác không biết ---
 
 def run_main(response_by_url, *extra: str):
+    """Các test mã thoát nói về phân loại kết quả, không về cache — nên tắt cache."""
     fetch = FakeFetch(response_by_url)
     return check_links.main(
-        ["--posts", str(FIXTURES), "--retries", "0", *extra], fetch=fetch, sleep=lambda _: None
+        ["--posts", str(FIXTURES), "--retries", "0", "--no-cache", *extra],
+        fetch=fetch,
+        sleep=lambda _: None,
     )
 
 
@@ -202,9 +218,9 @@ def test_allow_unknown_bao_to_chu_khong_im_lang(capsys):
 
 # --- cache: hỏi lại cái cần hỏi, bỏ qua cái vừa hỏi ---
 
-# Sau `last_verified` của fixture (2026-09-01 và 2026-09-02): một lần kiểm diễn
-# ra trước ngày bài được rà lại thì đằng nào cũng phải hỏi lại, nên lấy mốc đó
-# làm "hôm nay" thì mọi test dưới đây mới nói đúng thứ nó định nói.
+# Mốc "hôm nay" cố định, sau `last_verified` của fixture: một lần kiểm diễn ra
+# trước ngày bài được rà lại thì đằng nào cũng phải hỏi lại, nên nếu lấy mốc sớm
+# hơn thì các test cache dưới đây xanh vì lý do khác với lý do chúng định kiểm.
 TODAY = date(2026, 9, 10)
 
 
