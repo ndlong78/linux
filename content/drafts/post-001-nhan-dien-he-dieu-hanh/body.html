@@ -1,0 +1,124 @@
+<section class="objective"><h2>Mục tiêu</h2>
+<p>Sau bài này bạn trả lời được ba câu hỏi về bất kỳ máy nào vừa đăng nhập vào: distro nào và phiên bản bao nhiêu, kernel nào đang chạy, kiến trúc CPU là gì. Và quan trọng hơn — biết dùng câu trả lời đó để chọn đúng trình quản lý gói cho mọi bài sau.</p>
+<p>Đây là bài mở đầu nên nó không cài gì, không sửa gì. Toàn bộ chạy bằng tài khoản thường.</p>
+<p>Lý do nó đứng đầu series: mọi hướng dẫn Linux/Unix đều rẽ nhánh ở đúng chỗ này. Cùng một việc &quot;cài một gói&quot;, Ubuntu và Debian dùng <code>apt</code>, Fedora dùng <code>dnf</code>, FreeBSD dùng <code>pkg</code>. Đoán sai hệ điều hành thì lệnh đầu tiên đã sai, và thông báo lỗi nhận được thường không nói cho bạn biết là bạn đoán sai.</p>
+</section>
+
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2>
+<ul>
+<li>Một shell trên máy cần nhận diện — tại chỗ hoặc qua SSH.</li>
+<li>Tài khoản người dùng thường. Không cần quyền quản trị cho bất kỳ bước nào.</li>
+<li>Máy chạy Ubuntu, Xubuntu, Debian, Fedora hoặc FreeBSD. Các distro khác dùng được bước 1 và bước 2 y hệt.</li>
+</ul>
+</section>
+
+<section><h2>Các bước thực hiện</h2>
+<ol class="steps">
+
+<li>
+<p><strong>Đọc thẻ căn cước của hệ điều hành.</strong> Trên Linux, thông tin này nằm trong một file duy nhất và có định dạng chuẩn hoá: mỗi dòng là một cặp <code>KHOÁ=giá trị</code> theo đặc tả <code>os-release(5)</code>.</p>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">cat /etc/os-release</code></pre>
+<p>Ba trường đáng nhớ, theo đúng thứ tự ưu tiên khi cần ra quyết định:</p>
+<ul>
+<li><code>ID</code> — định danh máy đọc của distro: <code>ubuntu</code>, <code>debian</code>, <code>fedora</code>. Đây là trường bạn dùng trong script.</li>
+<li><code>ID_LIKE</code> — họ distro cha. Ubuntu khai <code>ID_LIKE=debian</code>, nghĩa là mọi thứ viết cho Debian gần như chắc chắn chạy được.</li>
+<li><code>VERSION_ID</code> — phiên bản dạng ngắn, ví dụ <code>24.04</code>. Dùng cái này chứ đừng cắt chuỗi từ <code>PRETTY_NAME</code>.</li>
+</ul>
+<p><code>PRETTY_NAME</code> là chuỗi để in ra cho người đọc. Nó đẹp, và nó không phải thứ để so sánh trong script.</p>
+</li>
+
+<li>
+<p><strong>Trên FreeBSD, hỏi thẳng hệ thống.</strong> FreeBSD không phải một bản phân phối Linux: nó là một hệ điều hành hoàn chỉnh do một dự án duy nhất phát hành cả kernel lẫn userland. Vì thế nó có lệnh riêng, và lệnh đó trả về nhiều hơn một số.</p>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">freebsd-version -kru</code></pre>
+<p>Ba cờ, ba con số khác nhau: <code>-k</code> là kernel đã cài, <code>-r</code> là kernel đang chạy, <code>-u</code> là userland. Chúng bằng nhau ở trạng thái bình thường — và lệch nhau ngay sau khi cập nhật mà chưa khởi động lại. Đó chính là thông tin mà một lệnh trả về một số duy nhất sẽ giấu mất của bạn.</p>
+</li>
+
+<li>
+<p><strong>Hỏi kernel và kiến trúc.</strong> Lệnh này giống hệt nhau trên cả hai họ hệ điều hành, vì nó là lệnh POSIX có từ trước khi Linux tồn tại.</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">uname -srm</code></pre>
+<p>Ba cờ theo đúng thứ tự in ra: <code>-s</code> tên kernel, <code>-r</code> phiên bản kernel, <code>-m</code> kiến trúc máy.</p>
+<p>Cái bẫy ở đây đáng nhớ hơn cả lệnh: <code>uname -s</code> trả về <code>Linux</code> trên Ubuntu, Xubuntu, Debian lẫn Fedora — vì cả bốn dùng chung một kernel. <strong>Không có lệnh <code>uname</code> nào cho bạn biết distro.</strong> Trên FreeBSD, ngược lại, <code>uname -s</code> trả về <code>FreeBSD</code>, vì ở đó kernel và hệ điều hành là một.</p>
+</li>
+
+<li>
+<p><strong>Lấy đúng hai giá trị cần dùng, không lấy cả file.</strong> Khi viết script, thứ bạn cần là hai biến chứ không phải mười lăm dòng. File <code>os-release</code> được thiết kế để nạp thẳng vào shell.</p>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sh -c '. /etc/os-release; printf "%s %s\n" "$ID" "$VERSION_ID"'</code></pre>
+<p>Chú ý lớp <code>sh -c</code> bọc ngoài: nạp file bằng dấu chấm sẽ đổ khoảng mười lăm biến (<code>NAME</code>, <code>VERSION</code>, <code>HOME_URL</code>…) vào shell hiện tại và chúng ở lại đó. Chạy trong shell con thì các biến chết cùng shell con.</p>
+</li>
+
+<li>
+<p><strong>Nếu hệ có systemd, có một lệnh gộp sẵn.</strong> Ubuntu, Xubuntu, Debian và Fedora hiện đại đều dùng systemd, nên trên máy thật lệnh này gộp hộ bạn tên máy, distro, kernel và kiến trúc vào một khối.</p>
+<p class="code-label linux"><span class="dot"></span>Linux (có systemd)</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">hostnamectl</code></pre>
+<p>Tiện, nhưng đừng xây script lên nó: lệnh này cần systemd đang là tiến trình số 1. Trong container, trong chroot, hoặc trên FreeBSD, nó không tồn tại hoặc không chạy được. Bước 1 và bước 3 thì chạy ở mọi nơi.</p>
+</li>
+
+</ol>
+</section>
+
+<section><h2>Kiểm chứng</h2>
+<p><strong>Expected Output</strong> — trên Ubuntu 24.04, phần đầu của bước 1 (đã lược các dòng URL):</p>
+<pre><code class="language-text">PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian</code></pre>
+<p>Bước 3 và bước 4 trên cùng máy đó:</p>
+<pre><code class="language-text">Linux 6.18.44-fc-v21 x86_64
+ubuntu 24.04</code></pre>
+<p>Chuỗi phiên bản kernel của bạn gần như chắc chắn khác — phần đuôi là do bản dựng kernel quyết định. Ubuntu 24.04 cài theo cách thông thường cho ra dạng <code>6.8.0-51-generic</code>; máy dùng để soạn bài này chạy một kernel dựng riêng. Cái cần khớp là ba phần: tên kernel, số phiên bản, kiến trúc.</p>
+<p>Trên FreeBSD, cùng hai bước ấy cho ra dạng khác hẳn — <code>uname -s</code> đổi giá trị, và <code>freebsd-version</code> mới là nơi có phiên bản hệ điều hành:</p>
+<pre class="bsd"><code class="language-text">FreeBSD 14.4-RELEASE amd64
+14.4-RELEASE
+14.4-RELEASE
+14.4-RELEASE</code></pre>
+<p>Đối chiếu kết quả của bạn với bảng sau — đây là bảng bạn sẽ còn quay lại suốt series:</p>
+<table>
+<thead><tr><th>Hệ điều hành</th><th><code>ID</code></th><th><code>ID_LIKE</code></th><th>Trình quản lý gói</th></tr></thead>
+<tbody>
+<tr><td>Ubuntu</td><td><code>ubuntu</code></td><td><code>debian</code></td><td><code>apt</code></td></tr>
+<tr><td>Xubuntu</td><td><code>ubuntu</code></td><td><code>debian</code></td><td><code>apt</code></td></tr>
+<tr><td>Debian</td><td><code>debian</code></td><td>không có</td><td><code>apt</code></td></tr>
+<tr><td>Fedora</td><td><code>fedora</code></td><td>không có</td><td><code>dnf</code></td></tr>
+<tr><td>FreeBSD</td><td><code>freebsd</code></td><td>không có</td><td><code>pkg</code></td></tr>
+</tbody>
+</table>
+<p>Đọc bảng theo chiều dọc cột <code>ID</code>: đó là lý do bài này đứng trước mọi bài khác.</p>
+</section>
+
+<section><h2>Lưu ý &amp; Khắc phục lỗi</h2>
+
+<p><strong>Xubuntu báo mình là Ubuntu.</strong> Không phải lỗi. Xubuntu là Ubuntu với môi trường desktop Xfce, dùng chung kho gói và chung chu kỳ phát hành, nên nó khai <code>ID=ubuntu</code>. Kubuntu, Lubuntu cũng vậy. Với câu hỏi &quot;chạy lệnh nào&quot; thì câu trả lời đó chính xác — chỉ có <code>PRETTY_NAME</code> mới nói cho bạn biết đang cầm bản flavour nào.</p>
+
+<p><strong><code>hostnamectl</code> báo lỗi không kết nối được bus.</strong> Thông báo đầy đủ là <code>System has not been booted with systemd as init system (PID 1). Can't operate.</code> — gặp thường xuyên trong container và chroot. Máy không hỏng, chỉ là không có systemd để hỏi. Quay lại bước 1 và bước 3, hai bước đó không phụ thuộc init system.</p>
+
+<p><strong>Không có <code>/etc/os-release</code>.</strong> Đặc tả quy định trình đọc phải thử <code>/etc/os-release</code> trước, không thấy thì đọc <code>/usr/lib/os-release</code>. Trên nhiều bản Linux, file thứ nhất chỉ là symlink trỏ tới file thứ hai. Nếu cả hai đều không có thì hệ đã rất cũ hoặc là ảnh tối giản bị lược file, khi đó chỉ còn <code>uname</code> để bám.</p>
+
+<p><strong>Trường <code>VERSION_ID</code> rỗng.</strong> Xảy ra thật trên Debian testing và Debian sid: nhánh chưa phát hành thì không có số phiên bản để khai. Script nào giả định trường này luôn tồn tại sẽ vỡ đúng trên máy của người dùng Debian rành nhất.</p>
+
+<p><strong>Đừng xây script lên <code>lsb_release</code>.</strong> Lệnh này thuộc một gói riêng, không được cài sẵn trên Fedora và vắng mặt ở nhiều ảnh Ubuntu, Debian tối giản. Nó cũng chậm hơn hẳn vì phải khởi động một trình thông dịch. File <code>os-release</code> thì luôn có và chỉ là một lần đọc file.</p>
+
+<p><strong>FreeBSD: hai con số lệch nhau sau khi cập nhật.</strong> <code>uname -r</code> báo kernel <em>đang chạy</em>, còn userland đã có thể mới hơn nếu bạn vừa cập nhật mà chưa khởi động lại. Đây không phải lỗi hiển thị — hai thành phần thực sự đang ở hai phiên bản. Dùng <code>freebsd-version -kru</code> để thấy đủ ba số trước khi kết luận máy đang ở phiên bản nào.</p>
+
+</section>
+
+<section class="exercise"><h2>Bài tập tự luyện</h2>
+<ol>
+<li>Viết một lệnh in ra <code>ID</code> và <code>VERSION_ID</code> cách nhau một khoảng trắng, và vẫn chạy được (in ra chuỗi rỗng thay vì báo lỗi) trên hệ không có <code>VERSION_ID</code>. Gợi ý: tra cú pháp thay giá trị mặc định của tham số trong shell POSIX.</li>
+<li>Trên máy bạn, tìm giá trị <code>ID_LIKE</code>. Giải thích vì sao Ubuntu có trường này còn Debian và Fedora thì không — câu trả lời nằm ở quan hệ giữa các distro, không nằm ở kỹ thuật.</li>
+<li>Chạy <code>uname -srm</code> trên hai máy khác distro nhưng cùng họ Linux. Phần nào của kết quả giống nhau, phần nào khác, và vì sao phần giống nhau lại không giúp bạn chọn được trình quản lý gói?</li>
+<li>Viết đoạn rẽ nhánh chọn <code>apt</code>, <code>dnf</code> hay <code>pkg</code> chỉ dựa trên <code>ID</code> và <code>ID_LIKE</code>, không dùng <code>lsb_release</code> và không dò tìm đường dẫn lệnh. Kiểm lại bằng bảng ở mục Kiểm chứng.</li>
+<li>Nếu có máy FreeBSD: so sánh <code>uname -r</code> với <code>freebsd-version -u</code>, rồi mô tả tình huống khiến hai giá trị đó lệch nhau.</li>
+</ol>
+</section>
