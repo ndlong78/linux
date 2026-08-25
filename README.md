@@ -3,8 +3,9 @@
 Series bài học Linux/Unix system administration bằng tiếng Việt, render tại request
 bằng Cloudflare Workers. Không có file HTML dẫn xuất nào trong git.
 
-Bản static tiền nhiệm là [`ndlong78/linux-daily`](https://github.com/ndlong78/linux-daily),
-vẫn đang chạy trên `linux.no.id.vn`. Repo này bắt đầu lại từ đầu về nội dung.
+Chạy trên `nix.no.id.vn`. Bản static tiền nhiệm là
+[`ndlong78/linux-daily`](https://github.com/ndlong78/linux-daily), vẫn đang phục vụ
+trên `linux.no.id.vn`. Repo này bắt đầu lại từ đầu về nội dung.
 
 ## Vì sao dynamic
 
@@ -101,4 +102,4 @@ cho khớp với những gì bạn vừa chạy, và chạy `npm run gate`.
 
 `site.json` đặt `noindex: true` trong khi `linux.no.id.vn` còn phục vụ nội dung
 tương tự — hai domain cùng nội dung sẽ bị tính duplicate content. Tắt cờ đó khi
-bản này tiếp quản.
+`nix.no.id.vn` tiếp quản hẳn.

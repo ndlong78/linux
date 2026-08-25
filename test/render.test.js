@@ -15,7 +15,9 @@ vi.mock("../content/manifest.json", async () => {
 
 const { handle } = await import("../src/index.js");
 
-const get = (path) => handle(new Request(`https://linux.id.vn${path}`));
+// Host lấy từ site.json chứ không viết cứng: đổi domain phải là đổi đúng một
+// giá trị, kể cả với bộ test.
+const get = (path) => handle(new Request(new URL(path, site.url)));
 const text = async (path) => (await get(path)).text();
 
 const POST_1 = "/posts/post-001-vi-du";
@@ -46,7 +48,7 @@ describe("router", () => {
   });
 
   test("chỉ nhận GET/HEAD", () => {
-    const response = handle(new Request("https://linux.id.vn/", { method: "POST" }));
+    const response = handle(new Request(site.url, { method: "POST" }));
     expect(response.status).toBe(405);
     expect(response.headers.get("allow")).toBe("GET, HEAD");
   });
@@ -162,8 +164,15 @@ describe("domain đọc từ site.json", () => {
     const html = await text("/");
     expect(html).toContain(`<link rel="canonical" href="${site.url}">`);
     expect(html).toContain(`href="${site.url}feed.xml"`);
-    // Không được lẫn domain của linux-daily.
-    expect(html).not.toContain("linux.no.id.vn");
+  });
+
+  test("không rò host nào khác host trong site.json", async () => {
+    // Bắt cả domain của linux-daily lẫn domain cũ của chính site này còn sót
+    // lại sau một lần đổi tên — cả hai đều từng là giá trị đúng.
+    const hosts = new Set(
+      [...(await text("/")).matchAll(/https?:\/\/([^/"'\s]+)/g)].map((m) => m[1]),
+    );
+    expect([...hosts]).toEqual([new URL(site.url).host]);
   });
 
   test("tiêu đề trang bài lấy site.title, không hard-code", async () => {

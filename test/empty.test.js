@@ -2,12 +2,13 @@
 // vẫn phải render, không trang nào được vỡ vì `posts` rỗng.
 
 import { describe, expect, test, vi } from "vitest";
+import site from "../site.json";
 
 vi.mock("../content/manifest.json", () => ({ default: { posts: [], bodies: {} } }));
 
 const { handle } = await import("../src/index.js");
 
-const get = (path) => handle(new Request(`https://linux.id.vn${path}`));
+const get = (path) => handle(new Request(new URL(path, site.url)));
 const text = async (path) => (await get(path)).text();
 
 describe("kho rỗng", () => {

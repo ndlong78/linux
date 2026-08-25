@@ -1,5 +1,5 @@
 {
-  "name": "linux",
+  "name": "nix",
   "private": true,
   "type": "module",
   "scripts": {
