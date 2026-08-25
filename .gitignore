@@ -3,3 +3,4 @@ content/manifest.json
 .wrangler/
 __pycache__/
 .pytest_cache/
+test/fixtures/manifest.json

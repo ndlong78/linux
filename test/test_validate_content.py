@@ -57,6 +57,13 @@ def test_fixture_hop_le_thi_khong_co_loi(workspace: Path):
     assert run(workspace) == []
 
 
+def test_moi_fixture_deu_qua_duoc_cong():
+    """Fixture cũng là dữ liệu của bộ test renderer — nó phải luôn hợp lệ thật."""
+    posts = load_posts(FIXTURES)
+    assert len(posts) >= 2, "cần ít nhất hai bài cùng trục để kiểm related-nav"
+    assert validate_content.validate(posts) == []
+
+
 # --- metadata ---
 
 @pytest.mark.parametrize("field", validate_content.REQUIRED_META)
