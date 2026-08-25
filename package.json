@@ -11,7 +11,9 @@
     "dev": "wrangler dev",
     "dev:draft": "python3 tools/build_manifest.py --posts content/drafts && wrangler dev",
     "gate": "python3 tools/validate_content.py && python3 -m pytest test -q && npm test",
-    "gate:draft": "python3 tools/validate_content.py --posts content/drafts --allow-draft"
+    "gate:draft": "python3 tools/validate_content.py --posts content/drafts --allow-draft",
+    "links": "python3 tools/check_links.py",
+    "links:draft": "python3 tools/check_links.py --posts content/drafts"
   },
   "devDependencies": {
     "vitest": "^3.2.4"

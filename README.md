@@ -74,6 +74,32 @@ Bộ test JS chạy trên chính manifest do `tools/build_manifest.py` dựng t�
 `test/fixtures/` — không phải object viết tay. Renderer đọc một trường mà bước
 dựng manifest không mang theo thì test đỏ, chứ không phải phát hiện lúc deploy.
 
+## Kiểm link
+
+Cổng nội dung chạy offline — nó phải chạy được trong container không có egress.
+Việc hỏi xem URL còn sống hay đã chết là của một công cụ riêng:
+
+```bash
+npm run links          # kiểm content/posts
+npm run links:draft    # kiểm content/drafts
+```
+
+Nó phân biệt **"sai"** với **"không biết"**, và mã thoát nói rõ điều đó:
+
+| mã | nghĩa |
+|---|---|
+| 0 | mọi URL đều sống |
+| 1 | có URL chết (4xx) hoặc redirect vĩnh viễn (301/308) — phải sửa |
+| 2 | không có URL chết, nhưng có URL không kết luận được (429, timeout, 5xx, 403) |
+
+Phân biệt này là lý do công cụ được tách ra ngay từ đầu: một link bị rate limit
+không phải link chết, và gộp hai thứ đó lại là dạy người dùng bỏ qua kết quả.
+Gặp 429 thì nó chờ theo đúng `Retry-After` của server rồi hỏi lại; hết lượt vẫn
+429 thì báo "không kết luận được" chứ không báo chết.
+
+301/308 bị tính là phải sửa dù link vẫn mở được: nó mở được hôm nay nhờ redirect,
+và sẽ hỏng vào ngày người ta gỡ redirect đi.
+
 ## Bản nháp
 
 Bài chưa chạy thật xong nằm ở `content/drafts/<slug>/`, không phải `content/posts/`.
