@@ -1,4 +1,4 @@
-# Linux Daily — bản dynamic
+# Linux | Unix Daily — bản dynamic
 
 Series bài học Linux/Unix system administration bằng tiếng Việt, render tại request
 bằng Cloudflare Workers. Không có file HTML dẫn xuất nào trong git.
