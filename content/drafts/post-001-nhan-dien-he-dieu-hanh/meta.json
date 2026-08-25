@@ -4,17 +4,35 @@
   "axis": "Nền tảng",
   "slug": "post-001-nhan-dien-he-dieu-hanh",
   "eyebrow": "Nền tảng · Bài mở đầu",
-  "title": "Máy này là gì: nhận diện hệ điều hành, phiên bản và kernel",
+  "title": "Máy này là gì: hệ điều hành, phiên bản, kernel",
   "lede": "Mọi lệnh trong series này rẽ nhánh theo distro. Bài đầu tiên vì thế không cài gì cả — nó dạy cách trả lời chính xác câu hỏi bạn phải hỏi trước mọi câu khác: mình đang đứng trên hệ nào.",
   "description": "Đọc /etc/os-release, uname và freebsd-version để xác định distro, phiên bản, kernel và kiến trúc trên Ubuntu, Xubuntu, Debian, Fedora và FreeBSD — nền tảng để chọn đúng trình quản lý gói.",
   "review_status": "draft",
-  "tested_on": ["Ubuntu 24.04.4 LTS (x86_64, container không có systemd)"],
+  "tested_on": [
+    "Ubuntu 24.04.4 LTS (x86_64, container không có systemd)"
+  ],
   "last_verified": "2026-08-25",
   "changes_system": false,
   "sources": [
-    {"title": "os-release(5) — freedesktop.org specification", "url": "https://www.freedesktop.org/software/systemd/man/latest/os-release.html", "kind": "upstream"},
-    {"title": "man7.org — uname(1)", "url": "https://man7.org/linux/man-pages/man1/uname.1.html", "kind": "official"},
-    {"title": "FreeBSD manual — freebsd-version(1)", "url": "https://man.freebsd.org/cgi/man.cgi?query=freebsd-version&sektion=1", "kind": "official"},
-    {"title": "FreeBSD Handbook — UNIX Basics", "url": "https://docs.freebsd.org/en/books/handbook/basics/", "kind": "upstream"}
+    {
+      "title": "os-release(5) — freedesktop.org specification",
+      "url": "https://www.freedesktop.org/software/systemd/man/latest/os-release.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "man7.org — uname(1)",
+      "url": "https://man7.org/linux/man-pages/man1/uname.1.html",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD manual — freebsd-version(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=freebsd-version&sektion=1",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Handbook — UNIX Basics",
+      "url": "https://docs.freebsd.org/en/books/handbook/basics/",
+      "kind": "upstream"
+    }
   ]
 }
