@@ -73,6 +73,30 @@ Bộ test JS chạy trên chính manifest do `tools/build_manifest.py` dựng t�
 `test/fixtures/` — không phải object viết tay. Renderer đọc một trường mà bước
 dựng manifest không mang theo thì test đỏ, chứ không phải phát hiện lúc deploy.
 
+## Bản nháp
+
+Bài chưa chạy thật xong nằm ở `content/drafts/<slug>/`, không phải `content/posts/`.
+Cổng nội dung từ chối mọi `review_status` khác `reviewed`, và đó là hành vi đúng:
+`reviewed` là chữ ký nói rằng từng lệnh trong bài đã được chạy trên đúng những hệ
+ghi ở `tested_on`. Không ai ký hộ được chữ ký đó.
+
+```bash
+npm run gate:draft   # kiểm nháp bằng đúng bộ quy tắc, chỉ trừ chữ ký review
+npm run dev:draft    # dựng manifest từ content/drafts/ rồi wrangler dev để xem thử
+```
+
+`--allow-draft` nới đúng một quy tắc chứ không nới bộ quy tắc: thiếu heading, thiếu
+khối FreeBSD, nguồn sai dạng — vẫn đỏ ngay lúc còn nháp.
+
+Khi bài đã chạy thật:
+
+```bash
+git mv content/drafts/<slug> content/posts/<slug>
+```
+
+rồi sửa `review_status` thành `reviewed`, cập nhật `tested_on` và `last_verified`
+cho khớp với những gì bạn vừa chạy, và chạy `npm run gate`.
+
 ## Đang chạy song song
 
 `site.json` đặt `noindex: true` trong khi `linux.no.id.vn` còn phục vụ nội dung

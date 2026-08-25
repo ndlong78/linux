@@ -4,12 +4,14 @@
   "type": "module",
   "scripts": {
     "manifest": "python3 tools/build_manifest.py",
+    "manifest:fixtures": "python3 tools/build_manifest.py --posts test/fixtures --out test/fixtures/manifest.json",
     "pretest": "npm run manifest && npm run manifest:fixtures",
     "test": "vitest run",
     "predev": "npm run manifest",
     "dev": "wrangler dev",
+    "dev:draft": "python3 tools/build_manifest.py --posts content/drafts && wrangler dev",
     "gate": "python3 tools/validate_content.py && python3 -m pytest test -q && npm test",
-    "manifest:fixtures": "python3 tools/build_manifest.py --posts test/fixtures --out test/fixtures/manifest.json"
+    "gate:draft": "python3 tools/validate_content.py --posts content/drafts --allow-draft"
   },
   "devDependencies": {
     "vitest": "^3.2.4"

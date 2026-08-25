@@ -89,6 +89,36 @@ def test_review_status_draft_khong_qua_duoc(workspace: Path):
     assert any("review_status" in e for e in run(workspace))
 
 
+def test_che_do_nhap_nhan_draft_nhung_khong_nhan_gi_khac(workspace: Path):
+    """`--allow-draft` chỉ nới đúng một quy tắc, không nới bộ quy tắc."""
+    edit_meta(workspace, review_status="draft")
+    assert validate_content.validate(load_posts(workspace), allow_draft=True) == []
+
+    edit_meta(workspace, review_status="dang-viet")
+    assert any(
+        "review_status" in e
+        for e in validate_content.validate(load_posts(workspace), allow_draft=True)
+    )
+
+
+def test_che_do_nhap_van_bat_moi_loi_con_lai(workspace: Path):
+    """Bài nháp sai heading vẫn phải đỏ — biết lúc còn nháp rẻ hơn biết lúc merge."""
+    edit_meta(workspace, review_status="draft")
+    edit_body(workspace, "<h2>Kiểm chứng</h2>", "<h2>Cái gì đó</h2>")
+    assert any(
+        "thiếu heading bắt buộc" in e
+        for e in validate_content.validate(load_posts(workspace), allow_draft=True)
+    )
+
+
+def test_ban_nhap_dang_co_qua_duoc_cong_nhap():
+    """Bài trong content/drafts/ phải luôn hợp lệ, chỉ thiếu mỗi chữ ký review."""
+    drafts = load_posts(ROOT / "content" / "drafts")
+    if not drafts:
+        pytest.skip("chưa có bản nháp nào")
+    assert validate_content.validate(drafts, allow_draft=True) == []
+
+
 @pytest.mark.parametrize(
     ("sources", "expected"),
     [
