@@ -38,6 +38,11 @@ REVIEW_STATUSES = ("draft", "reviewed")
 TITLE_PREFIX_LEN = len("#001 · ")
 TITLE_RENDERED_MAX = 60
 TITLE_MAX = TITLE_RENDERED_MAX - TITLE_PREFIX_LEN - 1
+
+# Đoạn mô tả bị cắt quanh mốc 160 ký tự. Khác với tiêu đề, renderer không nối gì
+# vào description — nó đi thẳng vào <meta name="description"> và vào <description>
+# của feed — nên ngưỡng ở đây chính là mốc cắt.
+DESCRIPTION_MAX = 160
 DISTRO_PATTERNS = {
     "Ubuntu": r"\bUbuntu\b",
     "Xubuntu": r"\bXubuntu\b",
@@ -125,6 +130,13 @@ def _check_meta(post: Post, errors: list[str], allow_draft: bool) -> None:
         say(
             f"meta.title dài {len(title)} ký tự, tối đa {TITLE_MAX} — "
             f"<title> render ra {len(title) + TITLE_PREFIX_LEN} ký tự sẽ bị cắt"
+        )
+
+    description = str(meta.get("description", ""))
+    if len(description) > DESCRIPTION_MAX:
+        say(
+            f"meta.description dài {len(description)} ký tự, tối đa {DESCRIPTION_MAX} — "
+            "phần vượt sẽ bị cắt ở trang kết quả tìm kiếm"
         )
 
     sources = meta.get("sources")

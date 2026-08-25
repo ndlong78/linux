@@ -95,6 +95,16 @@ def test_tieu_de_dung_bang_nguong_van_qua(workspace: Path):
     assert run(workspace) == []
 
 
+def test_description_qua_dai_bi_bat(workspace: Path):
+    edit_meta(workspace, description="X" * (validate_content.DESCRIPTION_MAX + 1))
+    assert any("meta.description dài" in e for e in run(workspace))
+
+
+def test_description_dung_bang_nguong_van_qua(workspace: Path):
+    edit_meta(workspace, description="X" * validate_content.DESCRIPTION_MAX)
+    assert run(workspace) == []
+
+
 def test_review_status_draft_khong_qua_duoc(workspace: Path):
     edit_meta(workspace, review_status="draft")
     assert any("review_status" in e for e in run(workspace))
