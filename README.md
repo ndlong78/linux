@@ -19,15 +19,21 @@ masthead, footer. Ở đây khung là một hàm.
 ## Bố cục
 
 ```
-site.json          cấu hình site; đổi domain là đổi một giá trị
-content/
-  manifest.json    metadata bài + fragment thân bài
+site.json                     cấu hình site; đổi domain là đổi một giá trị
+content/posts/<slug>/
+  meta.json                   metadata — nguồn sự thật duy nhất của bài
+  body.html                   fragment thân bài
+content/manifest.json         artifact dẫn xuất, KHÔNG commit (tools/build_manifest.py)
 src/
-  index.js         router
-  content.js       truy cập kho nội dung
-  render/          layout, post, home, feed/sitemap
-assets/            CSS, font — phục vụ qua Workers static assets
-test/              vitest
+  index.js                    router
+  content.js                  truy cập kho nội dung
+  render/                     layout, post, home, notfound, feed/sitemap
+tools/
+  content.py                  đọc kho nội dung (dùng chung)
+  build_manifest.py           gộp kho nội dung thành manifest cho bundle
+  validate_content.py         cổng nội dung
+assets/style.css              CSS — phục vụ qua Workers static assets
+test/                         vitest + pytest, chung một bộ fixture
 ```
 
 ## Nội dung là HTML fragment, không phải Markdown
@@ -42,13 +48,30 @@ Fragment = thân bài. Head, nav, masthead, related-nav, footer do renderer sinh
 `description` là trường metadata **riêng**, không suy từ `lede`: đo trên 56 bài của
 linux-daily thì 34 bài có description khác lede. Gộp hai trường là mất SEO copy.
 
+## Metadata sinh ra trang, không chỉ để kiểm
+
+Cổng nội dung bắt mỗi bài khai `sources` (tối thiểu hai nguồn official/upstream),
+`tested_on`, `last_verified`, `changes_system`. Renderer hiển thị đủ những trường
+đó ở cuối bài, và sinh luôn khối JSON-LD từ chúng.
+
+Đây là chỗ bản static hỏng: khối `<script id="ld-meta">` được viết tay cạnh phần
+hiển thị, tức hai bản của cùng một dữ liệu — và chúng lệch nhau thật. Ở đây
+metadata chỉ tồn tại trong `meta.json`; mọi thứ khác là hàm của nó. Bắt tác giả
+khai một trường rồi không render nó ra là biến quy tắc thành nghi thức: chỉ cần
+một lần không ai đọc là nó bắt đầu sai mà không ai biết.
+
 ## Chạy
 
 ```bash
 npm install
-npm test          # vitest
+npm test          # dựng manifest rồi chạy vitest
+npm run gate      # cổng nội dung + pytest + vitest — chạy trước khi merge
 npm run dev       # wrangler dev
 ```
+
+Bộ test JS chạy trên chính manifest do `tools/build_manifest.py` dựng từ
+`test/fixtures/` — không phải object viết tay. Renderer đọc một trường mà bước
+dựng manifest không mang theo thì test đỏ, chứ không phải phát hiện lúc deploy.
 
 ## Đang chạy song song
 
