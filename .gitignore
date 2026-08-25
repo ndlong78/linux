@@ -1,0 +1,5 @@
+node_modules/
+content/manifest.json
+.wrangler/
+__pycache__/
+.pytest_cache/

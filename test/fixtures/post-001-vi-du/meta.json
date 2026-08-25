@@ -1,0 +1,18 @@
+{
+  "issue": 1,
+  "date": "2026-09-01",
+  "axis": "Networking",
+  "slug": "post-001-vi-du",
+  "eyebrow": "Networking · Ví dụ",
+  "title": "Bài ví dụ dùng cho test cổng nội dung",
+  "lede": "Fragment tối thiểu nhưng hợp lệ, đủ để mọi quy tắc của validator có cái để bám vào.",
+  "description": "Bài fixture cho bộ test: đủ heading bắt buộc, có khối FreeBSD riêng và nhắc đủ các distro.",
+  "review_status": "reviewed",
+  "tested_on": ["Ubuntu 24.04 LTS", "FreeBSD 14.4-RELEASE"],
+  "last_verified": "2026-09-01",
+  "changes_system": false,
+  "sources": [
+    {"title": "man7.org — ip(8)", "url": "https://man7.org/linux/man-pages/man8/ip.8.html", "kind": "official"},
+    {"title": "FreeBSD Handbook — Network", "url": "https://docs.freebsd.org/en/books/handbook/network/", "kind": "upstream"}
+  ]
+}

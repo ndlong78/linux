@@ -3,8 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "manifest": "python3 tools/build_manifest.py",
+    "pretest": "npm run manifest",
     "test": "vitest run",
-    "dev": "wrangler dev"
+    "predev": "npm run manifest",
+    "dev": "wrangler dev",
+    "gate": "python3 tools/validate_content.py && python3 -m pytest test -q && npm test"
   },
   "devDependencies": {
     "vitest": "^3.2.4"
