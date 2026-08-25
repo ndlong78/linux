@@ -7,9 +7,9 @@
   "title": "Máy này là gì: hệ điều hành, phiên bản, kernel",
   "lede": "Mọi lệnh trong series này rẽ nhánh theo distro. Bài đầu tiên vì thế không cài gì cả — nó dạy cách trả lời chính xác câu hỏi bạn phải hỏi trước mọi câu khác: mình đang đứng trên hệ nào.",
   "description": "Đọc /etc/os-release, uname và freebsd-version để xác định distro, phiên bản và kernel trên Linux lẫn FreeBSD — bước đầu trước khi chọn apt, dnf hay pkg.",
-  "review_status": "draft",
+  "review_status": "reviewed",
   "tested_on": [
-    "Ubuntu 24.04.4 LTS (x86_64, container không có systemd)"
+    "Ubuntu 24.04.4 LTS (x86_64)"
   ],
   "last_verified": "2026-08-25",
   "changes_system": false,
