@@ -175,10 +175,15 @@ describe("domain đọc từ site.json", () => {
     expect([...hosts]).toEqual([new URL(site.url).host]);
   });
 
-  test("tiêu đề trang bài lấy site.title, không hard-code", async () => {
+  test("tiêu đề trang bài: số hiệu trước, tên bài sau, không kèm tên site", async () => {
     const title = (await text(POST_1)).match(/<title>(.*?)<\/title>/)[1];
-    expect(title).toContain(site.title);
-    expect(title).toContain("#001");
+    expect(title).toBe("#001 · Bài ví dụ dùng cho test cổng nội dung");
+  });
+
+  test("tên site vẫn đọc từ site.json ở những chỗ nó xuất hiện", async () => {
+    const html = await text(POST_1);
+    expect(html).toContain(`<meta property="og:site_name" content="${site.title}">`);
+    expect(html).toContain(`<a class="global-nav-brand" href="/">${site.title}</a>`);
   });
 });
 

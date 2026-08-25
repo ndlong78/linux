@@ -80,7 +80,11 @@ export function renderPost(post) {
   if (body === undefined) return null;
   const issue = issueNumber(post);
   return page({
-    title: `${post.title} — ${site.title} #${issue}`,
+    // Số hiệu đứng trước để tab trình duyệt phân biệt được các bài ngay cả khi
+    // tiêu đề bị cắt. Tên site không lặp lại ở đây: nó đã có trong og:site_name,
+    // trong JSON-LD và trong chính host — nối thêm vào chỉ đẩy tiêu đề vượt
+    // ngưỡng cắt của trang kết quả tìm kiếm.
+    title: `#${issue} · ${post.title}`,
     description: post.description,
     canonicalPath: `posts/${post.slug}`,
     ogType: "article",
