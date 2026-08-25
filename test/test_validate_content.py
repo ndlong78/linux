@@ -84,6 +84,17 @@ def test_description_trung_lede_bi_tu_choi(workspace: Path):
     assert any("trùng hệt meta.lede" in e for e in run(workspace))
 
 
+def test_tieu_de_qua_dai_bi_bat(workspace: Path):
+    """Quá ngưỡng một ký tự cũng đỏ — ngưỡng mềm là ngưỡng không ai giữ."""
+    edit_meta(workspace, title="X" * (validate_content.TITLE_MAX + 1))
+    assert any("meta.title dài" in e for e in run(workspace))
+
+
+def test_tieu_de_dung_bang_nguong_van_qua(workspace: Path):
+    edit_meta(workspace, title="X" * validate_content.TITLE_MAX)
+    assert run(workspace) == []
+
+
 def test_review_status_draft_khong_qua_duoc(workspace: Path):
     edit_meta(workspace, review_status="draft")
     assert any("review_status" in e for e in run(workspace))

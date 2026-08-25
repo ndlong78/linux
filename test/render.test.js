@@ -180,6 +180,15 @@ describe("domain đọc từ site.json", () => {
     expect(title).toBe("#001 · Bài ví dụ dùng cho test cổng nội dung");
   });
 
+  test("tiêu đề render ra không vượt ngưỡng mà cổng nội dung gác", async () => {
+    // Cổng nội dung giới hạn độ dài meta.title dựa trên hình dạng tiêu đề ở
+    // src/render/post.js. Đổi hình dạng đó mà quên ngưỡng bên kia thì test này đỏ.
+    for (const path of [POST_1, POST_2]) {
+      const title = (await text(path)).match(/<title>(.*?)<\/title>/)[1];
+      expect(title.length).toBeLessThanOrEqual(60);
+    }
+  });
+
   test("tên site vẫn đọc từ site.json ở những chỗ nó xuất hiện", async () => {
     const html = await text(POST_1);
     expect(html).toContain(`<meta property="og:site_name" content="${site.title}">`);

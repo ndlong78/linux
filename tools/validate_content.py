@@ -30,6 +30,14 @@ REQUIRED_HEADINGS = (
 CODE_LABEL_TOKENS = frozenset({"bsd", "ubuntu", "debian", "fedora", "linux", "same"})
 SOURCE_KINDS = frozenset({"official", "upstream"})
 REVIEW_STATUSES = ("draft", "reviewed")
+
+# Trang kết quả tìm kiếm cắt tiêu đề quanh mốc 60 ký tự, và renderer nối thêm
+# tiền tố số hiệu `#001 · ` (7 ký tự) vào trước meta.title — xem src/render/post.js.
+# 52 + 7 = 59, vừa đủ nằm dưới mốc đó. Phần bị cắt luôn là phần đuôi, tức là phần
+# tác giả viết cẩn thận nhất.
+TITLE_PREFIX_LEN = len("#001 · ")
+TITLE_RENDERED_MAX = 60
+TITLE_MAX = TITLE_RENDERED_MAX - TITLE_PREFIX_LEN - 1
 DISTRO_PATTERNS = {
     "Ubuntu": r"\bUbuntu\b",
     "Xubuntu": r"\bXubuntu\b",
@@ -111,6 +119,13 @@ def _check_meta(post: Post, errors: list[str], allow_draft: bool) -> None:
     # có description khác lede. Để chúng bằng nhau là dấu hiệu quên viết SEO copy.
     if meta.get("description") and meta.get("description") == meta.get("lede"):
         say("meta.description trùng hệt meta.lede — description là SEO copy riêng")
+
+    title = str(meta.get("title", ""))
+    if len(title) > TITLE_MAX:
+        say(
+            f"meta.title dài {len(title)} ký tự, tối đa {TITLE_MAX} — "
+            f"<title> render ra {len(title) + TITLE_PREFIX_LEN} ký tự sẽ bị cắt"
+        )
 
     sources = meta.get("sources")
     if not isinstance(sources, list) or len(sources) < 2:
