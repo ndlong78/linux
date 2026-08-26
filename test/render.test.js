@@ -5,7 +5,7 @@
 // renderer đọc một trường mà bước dựng manifest không mang theo thì test đỏ —
 // chứ không phải phát hiện lúc deploy.
 
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import site from "../site.json";
 
 vi.mock("../content/manifest.json", async () => {
@@ -97,6 +97,49 @@ describe("trang bài", () => {
 
   test("changes_system=false thì không có cảnh báo thay đổi hệ thống", async () => {
     expect(await text(POST_1)).not.toContain("changes-system");
+  });
+});
+
+describe("lên lịch theo date", () => {
+  // Fixture: #001 ngày 2026-06-01, #002 ngày 2026-06-02, #003 ngày 2026-06-03.
+  const at = (iso) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(iso));
+  };
+  afterEach(() => vi.useRealTimers());
+
+  test("bài chưa tới ngày không có trên trang chủ", async () => {
+    at("2026-06-01T12:00:00+07:00");
+    const html = await text("/");
+    expect(html).toContain("#001");
+    expect(html).not.toContain("#002");
+    expect(html).not.toContain("#003");
+  });
+
+  test("URL của bài chưa tới ngày trả 404", async () => {
+    at("2026-06-01T12:00:00+07:00");
+    // Mở được bằng đường dẫn trực tiếp là xuất bản sớm bằng cửa sau.
+    expect((await get(POST_2)).status).toBe(404);
+    expect((await get(POST_1)).status).toBe(200);
+  });
+
+  test("đúng 00:00 giờ Việt Nam là bài lên", async () => {
+    at("2026-06-01T23:59:00+07:00");
+    expect((await get(POST_2)).status).toBe(404);
+    at("2026-06-02T00:00:00+07:00");
+    expect((await get(POST_2)).status).toBe(200);
+  });
+
+  test("feed và sitemap cũng không lộ bài chưa xuất bản", async () => {
+    at("2026-06-01T12:00:00+07:00");
+    expect(await text("/feed.xml")).not.toContain("post-002-vi-du");
+    expect(await text("/sitemap.xml")).not.toContain("post-002-vi-du");
+  });
+
+  test("related-nav không trỏ tới bài chưa xuất bản", async () => {
+    at("2026-06-01T12:00:00+07:00");
+    // Link "bài sau" dẫn vào 404 còn tệ hơn không có link nào.
+    expect(await text(POST_1)).not.toContain('href="/posts/post-002-vi-du"');
   });
 });
 

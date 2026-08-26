@@ -144,7 +144,8 @@ chạy cổng đầu tiên xanh, mọi lần đỏ sau đó đều là một th�
 phải mười lỗi có sẵn phải lội qua. Mọi chỗ cần bạn viết đều mang chữ `TODO`.
 
 Cờ hữu ích: `--changes-system` (thêm sẵn mục Gỡ / Hoàn tác mà cổng sẽ đòi),
-`--scope linux-only` (xem dưới).
+`--scope linux-only` (xem dưới), `--date 2026-09-01` (bài tự lên đúng ngày đó,
+xem mục Lên lịch).
 
 ### Hợp đồng của một bài
 
@@ -192,6 +193,44 @@ bao giờ trở thành cách lách.
 
 Và nó hiện lên trang bài, không nằm im trong JSON: người đọc FreeBSD thấy ngay
 dòng "Bài này chỉ áp dụng cho Linux" thay vì đọc hết rồi mới phát hiện.
+
+## Lên lịch: bài tự xuất bản
+
+`meta.date` là ngày bài lên, tính theo **00:00 giờ Việt Nam**. Bài có ngày ở
+tương lai thì chưa xuất bản: nó không có trên trang chủ, không trong feed, không
+trong sitemap, và URL của nó trả 404 — mở được bằng đường dẫn trực tiếp là xuất
+bản sớm bằng cửa sau. Related-nav cũng không trỏ tới nó: link "bài sau" dẫn vào
+404 còn tệ hơn không có link nào.
+
+Viết trước mười bài, merge một lần, mỗi bài tự hiện đúng ngày của nó.
+
+Không có cron, không có job nào chạy theo lịch, và không cần deploy lại. Mọi
+trang được render tại request, nên việc lọc bài chưa tới ngày xảy ra ở từng
+request — bài của tuần sau đã nằm sẵn trong bundle từ lần deploy hiện tại.
+
+Muốn xem thử một bài đã lên lịch thì để nó ở `content/drafts/` và dùng
+`npm run dev:draft`; chuyển sang `content/posts/` là lúc chốt ngày lên.
+
+## Deploy
+
+```bash
+npm run build     # dựng manifest + wrangler dry-run, không cần tài khoản
+npm run deploy    # dựng manifest + wrangler deploy
+```
+
+`npm run gate` gọi sẵn `npm run build`, nên bundle hỏng thì đỏ ở PR chứ không
+đỏ sau khi merge.
+
+`.github/workflows/xuat-ban.yml` chạy cổng nội dung trên mọi PR, và deploy khi
+merge vào `main`. Cần hai secret trong repo:
+
+| secret | lấy ở đâu |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → template "Edit Cloudflare Workers" |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare → Workers & Pages → Account ID |
+
+Workflow cache `content/.link-cache.json` theo `hashFiles` của các `meta.json`,
+nên thêm một bài chỉ kiểm link của bài đó.
 
 ## Bản nháp
 

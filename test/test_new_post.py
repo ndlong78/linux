@@ -102,3 +102,20 @@ def test_so_hieu_ke_tiep_tinh_ca_bai_dang_va_bai_nhap(tmp_path: Path, monkeypatc
     monkeypatch.setattr(new_post, "POSTS_DIR", posts)
     monkeypatch.setattr(new_post, "DRAFTS_DIR", drafts)
     assert new_post.next_issue() == 13
+
+
+# --- lên lịch ---
+
+def test_dat_duoc_ngay_len(tmp_path: Path):
+    """Ngày tương lai là hợp lệ: bài nằm trong bundle nhưng chưa được trả ra."""
+    drafts = make(tmp_path, "--date", "2099-01-31")
+    meta = json.loads((drafts / "post-042-thu-nghiem" / "meta.json").read_text(encoding="utf-8"))
+    assert meta["date"] == "2099-01-31"
+    # last_verified là ngày kiểm, không phải ngày lên.
+    assert meta["last_verified"] != meta["date"]
+    assert validate_content.validate(load_posts(drafts), allow_draft=True) == []
+
+
+def test_ngay_sai_dinh_dang_bi_tu_choi(tmp_path: Path):
+    assert new_post.main(["post-042-x", "--date", "31/01/2099", "--drafts", str(tmp_path)]) == 1
+    assert not (tmp_path / "post-042-x").exists()

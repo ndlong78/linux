@@ -1,0 +1,77 @@
+# Cổng nội dung chạy trên mọi PR; merge vào main thì deploy.
+#
+# Không có job nào chạy theo lịch, và đó là chủ đích: lên lịch bài nằm ở
+# `meta.date`, còn việc lọc bài chưa tới ngày xảy ra tại từng request trong
+# Worker. Bài viết trước cho tuần sau đã nằm sẵn trong bundle từ lần deploy này
+# và tự hiện đúng ngày của nó — không cần cron, không cần deploy lại.
+
+name: Xuất bản
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: xuat-ban-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Cổng nội dung
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Cache kết quả kiểm link giữa các lần chạy. Công cụ đợi 1 giây giữa hai
+      # request tới cùng một host để không tự chuốc 429, nên kho lớn dần là mỗi
+      # lần chạy tốn vài phút nếu hỏi lại từ đầu.
+      - uses: actions/cache@v4
+        with:
+          path: content/.link-cache.json
+          key: link-cache-${{ hashFiles('content/posts/**/meta.json') }}
+          restore-keys: link-cache-
+
+      - run: pip install pytest
+      - run: npm ci
+      - run: npm run gate
+
+  deploy:
+    name: Deploy lên Cloudflare
+    needs: gate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: npm ci
+
+      # Manifest là artifact dẫn xuất, không nằm trong git — Worker không đọc
+      # được filesystem lúc chạy nên nội dung phải được gộp vào bundle ở đây.
+      - run: npm run manifest
+
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

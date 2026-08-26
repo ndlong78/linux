@@ -84,10 +84,14 @@ def next_issue() -> int:
     return max(issues, default=0) + 1
 
 
-def build_meta(slug: str, issue: int, axis: str, scope: str, changes_system: bool) -> dict:
+def build_meta(
+    slug: str, issue: int, axis: str, scope: str, changes_system: bool, publish_on: date
+) -> dict:
     meta = {
         "issue": issue,
-        "date": date.today().isoformat(),
+        # Ngày lên, theo 00:00 giờ Việt Nam. Ngày tương lai là hợp lệ và có
+        # nghĩa: bài nằm trong bundle nhưng chưa được trả ra cho tới ngày đó.
+        "date": publish_on.isoformat(),
         "axis": axis,
         "slug": slug,
         "eyebrow": f"{axis} · TODO",
@@ -96,6 +100,8 @@ def build_meta(slug: str, issue: int, axis: str, scope: str, changes_system: boo
         "description": "TODO: SEO copy riêng, tối đa 160 ký tự và phải khác lede.",
         "review_status": "draft",
         "tested_on": ["TODO: OS và phiên bản đã thật sự chạy các lệnh trong bài"],
+        # Ngày kiểm, không phải ngày lên: bài viết hôm nay cho tuần sau vẫn được
+        # kiểm hôm nay.
         "last_verified": date.today().isoformat(),
         "changes_system": changes_system,
         "sources": [
@@ -134,8 +140,19 @@ def main(argv=None) -> int:
         action="store_true",
         help="Bài có sửa hệ thống — thêm sẵn mục Gỡ / Hoàn tác mà cổng nội dung sẽ đòi",
     )
+    parser.add_argument(
+        "--date",
+        default=None,
+        help="Ngày lên (YYYY-MM-DD), mặc định hôm nay. Ngày tương lai = bài tự lên đúng ngày đó.",
+    )
     parser.add_argument("--drafts", default=str(DRAFTS_DIR))
     args = parser.parse_args(argv)
+
+    try:
+        publish_on = date.fromisoformat(args.date) if args.date else date.today()
+    except ValueError:
+        print(f"✗ --date phải là YYYY-MM-DD: {args.date!r}", file=sys.stderr)
+        return 1
 
     if not SLUG_RE.match(args.slug):
         print(f"✗ slug phải là chữ thường và gạch nối: {args.slug!r}", file=sys.stderr)
@@ -150,7 +167,14 @@ def main(argv=None) -> int:
     directory.mkdir(parents=True)
     (directory / "meta.json").write_text(
         json.dumps(
-            build_meta(args.slug, args.issue or next_issue(), args.axis, args.scope, args.changes_system),
+            build_meta(
+                args.slug,
+                args.issue or next_issue(),
+                args.axis,
+                args.scope,
+                args.changes_system,
+                publish_on,
+            ),
             ensure_ascii=False,
             indent=2,
         )
