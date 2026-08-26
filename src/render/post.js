@@ -105,6 +105,7 @@ export function renderPost(post) {
     body: `<article class="post">
 <div class="masthead">
 <span class="issue">#${issue}</span>
+<span class="level" title="Cấp ${esc(String(post.level))} trong lộ trình">L${esc(String(post.level))}</span>
 <time class="masthead-date" datetime="${esc(post.date)}">${esc(post.date)}</time>
 <a class="tag" href="/truc/${esc(slugify(post.axis))}">${esc(post.axis)}</a>
 </div>

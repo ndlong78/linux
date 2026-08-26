@@ -11,7 +11,7 @@ function card(post) {
 <span class="post-card-body">
 <span class="post-card-title">${esc(post.title)}</span>
 <span class="post-card-lede">${esc(post.lede)}</span>
-<span class="post-card-meta"><span class="tag">${esc(post.axis)}</span><time datetime="${esc(post.date)}">${esc(post.date)}</time></span>
+<span class="post-card-meta"><span class="level">L${esc(String(post.level))}</span><span class="tag">${esc(post.axis)}</span><time datetime="${esc(post.date)}">${esc(post.date)}</time></span>
 </span>
 </a>
 </li>`;

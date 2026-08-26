@@ -21,7 +21,7 @@ from pathlib import Path
 from content import ContentError, Post, load_posts
 
 REQUIRED_META = (
-    "issue", "date", "axis", "slug", "eyebrow", "title", "lede", "description",
+    "issue", "date", "level", "axis", "slug", "eyebrow", "title", "lede", "description",
     "review_status", "tested_on", "last_verified", "changes_system", "sources",
 )
 REQUIRED_HEADINGS = (
@@ -72,6 +72,31 @@ def _load_platforms() -> list[dict]:
 
 
 PLATFORMS = _load_platforms()
+
+# Lộ trình 4 cấp nằm ở content/curriculum.json. `level` và `axis` của một bài
+# phải khớp một nhánh có thật trong đó — nếu không, bài rơi ra ngoài lộ trình mà
+# vẫn render bình thường, và không ai phát hiện cho tới khi nhìn lại cả series.
+CURRICULUM_PATH = Path(__file__).resolve().parents[1] / "content" / "curriculum.json"
+
+
+def _load_curriculum() -> dict[int, dict]:
+    try:
+        data = json.loads(CURRICULUM_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ContentError(f"{CURRICULUM_PATH.name}: không đọc được ({exc})") from exc
+    levels = {}
+    for entry in data.get("levels", []):
+        levels[entry["level"]] = {
+            "name": entry["name"],
+            "vi": entry.get("vi", ""),
+            "axes": {track["axis"] for track in entry["tracks"]},
+        }
+    if not levels:
+        raise ContentError(f"{CURRICULUM_PATH.name}: thiếu danh sách `levels`")
+    return levels
+
+
+CURRICULUM = _load_curriculum()
 DISTRO_PATTERNS = {p["name"]: rf"\b{re.escape(p['name'])}\b" for p in PLATFORMS}
 
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -171,6 +196,15 @@ def _check_meta(post: Post, errors: list[str], allow_draft: bool) -> None:
 
     if meta.get("scope", DEFAULT_SCOPE) not in SCOPES:
         say(f"meta.scope phải thuộc {list(SCOPES)}")
+
+    level = meta.get("level")
+    if level not in CURRICULUM:
+        say(f"meta.level phải thuộc {sorted(CURRICULUM)} — xem content/curriculum.json")
+    elif meta.get("axis") not in CURRICULUM[level]["axes"]:
+        say(
+            f"meta.axis '{meta.get('axis')}' không phải nhánh của cấp {level} "
+            f"({CURRICULUM[level]['name']}); nhánh hợp lệ: {sorted(CURRICULUM[level]['axes'])}"
+        )
 
     sources = meta.get("sources")
     if not isinstance(sources, list) or len(sources) < 2:

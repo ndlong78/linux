@@ -218,6 +218,23 @@ strong { font-weight: 640; }
   white-space: nowrap;
 }
 
+/* Huy hiệu cấp: lộ trình 4 cấp là trục tổ chức của cả series, nên nó phải đọc
+ * được ngay trên đầu bài chứ không nằm trong đầu người viết. */
+.level {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  border-radius: 5px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 a.tag { text-decoration: none; transition: background-color 120ms ease; }
 a.tag:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
 .tag-count { opacity: 0.6; font-size: 0.9em; }
