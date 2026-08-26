@@ -29,6 +29,30 @@ REQUIRED_HEADINGS = (
 )
 CODE_LABEL_TOKENS = frozenset({"bsd", "ubuntu", "debian", "fedora", "linux", "same"})
 SOURCE_KINDS = frozenset({"official", "upstream"})
+REVIEW_STATUSES = ("draft", "reviewed")
+
+# Phần lớn chủ đề nâng cao — systemd unit, cgroup v2, eBPF, SELinux, netplan —
+# không có đối ứng FreeBSD. Bắt mọi bài phải có khối BSD thì tác giả chỉ còn hai
+# lối: nhét một khối gượng ép cho qua cổng, hoặc bỏ luôn chủ đề. Cả hai đều tệ
+# hơn lối thứ ba: khai báo thẳng ra rằng bài này chỉ dành cho Linux.
+#
+# Khai báo chứ không phải tắt quy tắc. Vắng trường `scope` thì bài bị kiểm theo
+# luật chặt nhất, nên bỏ sót không bao giờ trở thành cách lách.
+DEFAULT_SCOPE = "cross-platform"
+SCOPES = (DEFAULT_SCOPE, "linux-only")
+
+# Trang kết quả tìm kiếm cắt tiêu đề quanh mốc 60 ký tự, và renderer nối thêm
+# tiền tố số hiệu `#001 · ` (7 ký tự) vào trước meta.title — xem src/render/post.js.
+# 52 + 7 = 59, vừa đủ nằm dưới mốc đó. Phần bị cắt luôn là phần đuôi, tức là phần
+# tác giả viết cẩn thận nhất.
+TITLE_PREFIX_LEN = len("#001 · ")
+TITLE_RENDERED_MAX = 60
+TITLE_MAX = TITLE_RENDERED_MAX - TITLE_PREFIX_LEN - 1
+
+# Đoạn mô tả bị cắt quanh mốc 160 ký tự. Khác với tiêu đề, renderer không nối gì
+# vào description — nó đi thẳng vào <meta name="description"> và vào <description>
+# của feed — nên ngưỡng ở đây chính là mốc cắt.
+DESCRIPTION_MAX = 160
 DISTRO_PATTERNS = {
     "Ubuntu": r"\bUbuntu\b",
     "Xubuntu": r"\bXubuntu\b",
@@ -77,7 +101,7 @@ def _visible_text(markup: str) -> str:
     return html.unescape(TAG_RE.sub(" ", markup))
 
 
-def _check_meta(post: Post, errors: list[str]) -> None:
+def _check_meta(post: Post, errors: list[str], allow_draft: bool) -> None:
     say = lambda msg: errors.append(f"{post.slug}: {msg}")  # noqa: E731
     meta = post.meta
 
@@ -97,13 +121,36 @@ def _check_meta(post: Post, errors: list[str]) -> None:
         say("meta.changes_system phải là boolean")
     if not isinstance(meta.get("tested_on"), list) or not meta.get("tested_on"):
         say("meta.tested_on phải là danh sách OS/version đã test")
-    if meta.get("review_status") != "reviewed":
+    # Bản nháp được kiểm bằng đúng bộ quy tắc này, chỉ trừ một điều: nó chưa
+    # tự nhận là đã review. Mọi lỗi khác vẫn phải đỏ ngay lúc còn nháp — biết
+    # sớm rẻ hơn biết lúc sắp merge.
+    if allow_draft:
+        if meta.get("review_status") not in REVIEW_STATUSES:
+            say(f"meta.review_status phải thuộc {list(REVIEW_STATUSES)}")
+    elif meta.get("review_status") != "reviewed":
         say("meta.review_status phải là 'reviewed' mới được merge")
 
     # description tách khỏi lede là có lý do đo được: ở kho tiền nhiệm 34/56 bài
     # có description khác lede. Để chúng bằng nhau là dấu hiệu quên viết SEO copy.
     if meta.get("description") and meta.get("description") == meta.get("lede"):
         say("meta.description trùng hệt meta.lede — description là SEO copy riêng")
+
+    title = str(meta.get("title", ""))
+    if len(title) > TITLE_MAX:
+        say(
+            f"meta.title dài {len(title)} ký tự, tối đa {TITLE_MAX} — "
+            f"<title> render ra {len(title) + TITLE_PREFIX_LEN} ký tự sẽ bị cắt"
+        )
+
+    description = str(meta.get("description", ""))
+    if len(description) > DESCRIPTION_MAX:
+        say(
+            f"meta.description dài {len(description)} ký tự, tối đa {DESCRIPTION_MAX} — "
+            "phần vượt sẽ bị cắt ở trang kết quả tìm kiếm"
+        )
+
+    if meta.get("scope", DEFAULT_SCOPE) not in SCOPES:
+        say(f"meta.scope phải thuộc {list(SCOPES)}")
 
     sources = meta.get("sources")
     if not isinstance(sources, list) or len(sources) < 2:
@@ -129,6 +176,7 @@ def _check_meta(post: Post, errors: list[str]) -> None:
 def _check_body(post: Post, errors: list[str]) -> None:
     say = lambda msg: errors.append(f"{post.slug}: {msg}")  # noqa: E731
     body = post.body
+    linux_only = post.meta.get("scope", DEFAULT_SCOPE) == "linux-only"
 
     for pattern, label in FORBIDDEN_IN_BODY:
         if pattern.search(body):
@@ -146,6 +194,8 @@ def _check_body(post: Post, errors: list[str]) -> None:
     for token in CODE_LABEL_RE.findall(body):
         if token.lower() not in CODE_LABEL_TOKENS:
             say(f"code-label token không hợp lệ: {token}")
+        if linux_only and token.lower() == "bsd":
+            say("scope=linux-only nhưng vẫn có nhãn code-label bsd")
 
     blocks = list(PRE_RE.finditer(body))
     if not blocks:
@@ -177,20 +227,33 @@ def _check_body(post: Post, errors: list[str]) -> None:
 
     # Đây là quy tắc đã chặn bài #055 của kho tiền nhiệm: bài có nhãn
     # `code-label bsd` nhưng không có <pre class="bsd"> nào. Hai chỗ khác nhau.
-    if freebsd_blocks == 0:
+    if linux_only:
+        # Khai báo phải đúng cả hai chiều. Bài tự nhận chỉ dành cho Linux mà vẫn
+        # có khối BSD thì một trong hai thứ đó sai, và không ai biết là thứ nào.
+        if freebsd_blocks:
+            say('scope=linux-only nhưng vẫn có <pre class="bsd"> — bỏ khối đó hoặc bỏ khai báo')
+    elif freebsd_blocks == 0:
         say('thiếu code block FreeBSD — cần ít nhất một <pre class="bsd">')
 
     visible = _visible_text(body)
-    missing = [name for name, pattern in DISTRO_PATTERNS.items() if not re.search(pattern, visible)]
+    # Bài linux-only vẫn phải chạy được trên cả bốn distro Linux của series; chỉ
+    # riêng FreeBSD được miễn. Nhắc tên FreeBSD trong phần văn xuôi thì vẫn được
+    # — nói "FreeBSD không có thứ này" chính là thông tin người đọc cần.
+    patterns = {
+        name: pattern
+        for name, pattern in DISTRO_PATTERNS.items()
+        if not (linux_only and name == "FreeBSD")
+    }
+    missing = [name for name, pattern in patterns.items() if not re.search(pattern, visible)]
     if missing:
         say(f"thân bài chưa nhắc tới: {', '.join(missing)}")
 
 
-def validate(posts: list[Post]) -> list[str]:
+def validate(posts: list[Post], *, allow_draft: bool = False) -> list[str]:
     errors: list[str] = []
     by_issue: dict[int, str] = {}
     for post in posts:
-        _check_meta(post, errors)
+        _check_meta(post, errors, allow_draft)
         _check_body(post, errors)
         issue = post.meta.get("issue")
         if isinstance(issue, int):
@@ -204,6 +267,11 @@ def validate(posts: list[Post]) -> list[str]:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--posts", default=None, help="Thư mục content/posts")
+    parser.add_argument(
+        "--allow-draft",
+        action="store_true",
+        help="Nhận review_status='draft' — dùng để kiểm bài trong content/drafts/",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -212,14 +280,15 @@ def main(argv=None) -> int:
         print(f"✗ {exc}", file=sys.stderr)
         return 1
 
-    errors = validate(posts)
+    errors = validate(posts, allow_draft=args.allow_draft)
     if errors:
         print(f"✗ Cổng nội dung: {len(errors)} lỗi", file=sys.stderr)
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
         return 1
 
-    print(f"✓ Cổng nội dung: {len(posts)} bài đạt.")
+    mode = " (chế độ nháp)" if args.allow_draft else ""
+    print(f"✓ Cổng nội dung{mode}: {len(posts)} bài đạt.")
     return 0
 
 

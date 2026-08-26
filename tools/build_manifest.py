@@ -17,7 +17,14 @@ from pathlib import Path
 from content import POSTS_DIR, ContentError, load_posts
 
 ROOT = Path(__file__).resolve().parents[1]
-FIELDS = ("issue", "date", "axis", "slug", "eyebrow", "title", "lede", "description")
+# Trường nào renderer đọc thì trường đó phải vào manifest. `sources`,
+# `tested_on`, `last_verified`, `changes_system` là phần hợp đồng mà cổng nội
+# dung bắt buộc phải có — bỏ chúng khỏi manifest là bắt tác giả viết dữ liệu mà
+# không ai đọc.
+FIELDS = (
+    "issue", "date", "axis", "scope", "slug", "eyebrow", "title", "lede", "description",
+    "tested_on", "last_verified", "changes_system", "sources",
+)
 
 
 def build(posts_dir: Path | None = None) -> dict:
@@ -40,7 +47,11 @@ def main(argv=None) -> int:
         print(f"✗ {exc}", file=sys.stderr)
         return 1
 
-    Path(args.out).write_text(
+    out = Path(args.out)
+    # content/ nằm trong .gitignore nên bản clone mới không có thư mục này; thiếu
+    # dòng dưới thì `npm test` đỏ ngay ở lần chạy đầu.
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     print(f"✓ manifest: {len(manifest['posts'])} bài → {args.out}")

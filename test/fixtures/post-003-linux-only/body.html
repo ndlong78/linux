@@ -1,0 +1,11 @@
+<section class="objective"><h2>Mục tiêu</h2><p>Ví dụ cho bài chỉ chạy trên Linux.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><p>Ubuntu hoặc Xubuntu, Debian, Fedora. FreeBSD không dùng systemd nên bài này không áp dụng.</p></section>
+<section><h2>Các bước thực hiện</h2>
+<ol class="steps"><li>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">systemctl list-units --type=service --state=running</code></pre>
+</li></ol></section>
+<section><h2>Kiểm chứng</h2><p><strong>Expected Output:</strong> danh sách service đang chạy.</p></section>
+<section><h2>Lưu ý &amp; Khắc phục lỗi</h2><p>Không có.</p></section>
+<section class="exercise"><h2>Bài tập tự luyện</h2><ol><li>Lọc theo trạng thái failed.</li></ol></section>

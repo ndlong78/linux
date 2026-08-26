@@ -1,1 +1,231 @@
-:root{color-scheme:light dark}
+/* Khung trình bày cho trang render tại request.
+ *
+ * Tên class ở đây là hợp đồng hai chiều: một nửa do renderer sinh (global-nav,
+ * masthead, related-nav, sources, provenance), một nửa nằm trong fragment thân
+ * bài và được cổng nội dung kiểm (code-label, run-context, pre.bsd, steps).
+ * Đổi tên một class ở đây mà không đổi bên kia là mất style im lặng. */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #fbfaf7;
+  --surface: #ffffff;
+  --border: #e2ddd3;
+  --text: #1c1b19;
+  --muted: #5f5b53;
+  --accent: #8a3f1d;
+  --code-bg: #f4f1ea;
+  --code-text: #22201d;
+  --bsd: #a3182b;
+  --linux: #1f5f8b;
+
+  --measure: 42rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161513;
+    --surface: #1e1c19;
+    --border: #35312b;
+    --text: #ece7dd;
+    --muted: #a49d90;
+    --accent: #e8945f;
+    --code-bg: #23211d;
+    --code-text: #ece7dd;
+    --bsd: #ef7b8a;
+    --linux: #7cb6dc;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 1rem/1.65 ui-serif, Georgia, "Times New Roman", serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+a { color: var(--accent); }
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  z-index: 10;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.global-nav {
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.25rem;
+}
+.global-nav-brand {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+body > footer {
+  border-top: 1px solid var(--border);
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+h1 { font-size: 1.9rem; line-height: 1.25; margin: 0.4rem 0 0.6rem; }
+h2 { font-size: 1.25rem; margin: 2rem 0 0.5rem; }
+
+/* --- trang chủ --- */
+
+.post-list { list-style: none; margin: 0; padding: 0; }
+.post-list li { border-top: 1px solid var(--border); padding: 1rem 0; }
+.post-list a { text-decoration: none; font-weight: 600; }
+.post-list p { margin: 0.3rem 0 0; color: var(--muted); }
+.issue {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+/* --- trang bài --- */
+
+.masthead {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+.scope-note {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--linux);
+  background: var(--surface);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.eyebrow {
+  margin: 1.25rem 0 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.lede { font-size: 1.1rem; color: var(--muted); margin: 0 0 1.5rem; }
+
+.steps { padding-left: 1.2rem; }
+.steps > li { margin-bottom: 1.75rem; }
+
+/* code-label: nhãn distro đứng trước khối lệnh, do fragment cung cấp. */
+.code-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.code-label .dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+.code-label.linux, .code-label.ubuntu, .code-label.debian, .code-label.fedora { color: var(--linux); }
+.code-label.bsd { color: var(--bsd); }
+
+.run-context {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+pre {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  background: var(--code-bg);
+  color: var(--code-text);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--linux);
+  border-radius: 3px;
+}
+/* Khối FreeBSD phải phân biệt được với khối Linux chỉ bằng mắt — đây là lỗi
+ * mà cổng nội dung bắt ở phía dữ liệu, còn đây là phía hiển thị. */
+pre.bsd { border-left-color: var(--bsd); }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+}
+:not(pre) > code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+/* --- nguồn & xuất xứ (renderer sinh từ meta.json) --- */
+
+.sources ol { padding-left: 1.2rem; }
+.sources li { margin-bottom: 0.4rem; }
+.source-host, .source-kind {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.source-kind {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+}
+
+.provenance {
+  margin-top: 2rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.changes-system {
+  border-left: 3px solid var(--bsd);
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* --- điều hướng cùng trục --- */
+
+.related-nav { margin-top: 2.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.series-links { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.series-link {
+  display: block;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+.series-link.next { text-align: right; }
+.series-link.is-empty { border: 0; }
+.series-kicker { display: block; font-size: 0.75rem; color: var(--muted); }
+
+.not-found h1 { font-size: 3rem; margin-bottom: 0; }
+
+@media (max-width: 34rem) {
+  .series-links { grid-template-columns: 1fr; }
+  .series-link.next { text-align: left; }
+}
