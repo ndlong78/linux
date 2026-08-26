@@ -2,5 +2,14 @@
   "name": "nix",
   "main": "src/index.js",
   "compatibility_date": "2026-08-25",
-  "assets": { "directory": "./assets", "binding": "ASSETS" }
+  "assets": { "directory": "./assets", "binding": "ASSETS" },
+
+  // Nội dung phải được gộp vào bundle lúc build vì Worker không đọc được
+  // filesystem lúc chạy, và manifest là artifact dẫn xuất nằm ngoài git. Để bước
+  // dựng nó ở đây thì mọi đường vào đều có nó — `npm run deploy`, `wrangler
+  // deploy` gõ tay, hay một CI nào đó chỉ biết gọi wrangler.
+  //
+  // Không thay được cho cổng nội dung: cái này chỉ đảm bảo bundle dựng được,
+  // không đảm bảo nội dung bên trong nó đạt.
+  "build": { "command": "python3 tools/build_manifest.py" }
 }
