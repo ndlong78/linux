@@ -133,19 +133,23 @@ báo. Chạy `npm run links` ở máy có mạng để có kết luận thật.
 ## Viết một bài
 
 ```bash
-npm run new-post post-002-ten-bai --axis "Networking"
+npm run new-post -- post-002-ten-bai --axis "Networking"
 npm run gate:draft        # kiểm; khung vừa sinh ra đã qua sẵn
 npm run dev:draft         # xem thử trang thật
 ```
+
+Dấu `--` là bắt buộc và không bỏ được: thiếu nó thì npm hiểu `--axis` là cờ của
+chính npm, nuốt luôn tên cờ và chỉ đẩy giá trị trần xuống script — lỗi hiện ra ở
+tận argparse dưới dạng `unrecognized arguments`, không nhắc gì tới npm.
 
 `new-post` dựng `content/drafts/<slug>/{meta.json,body.html}` với đủ heading bắt
 buộc và số hiệu kế tiếp. Khung đó **qua được cổng ngay** — chủ đích là để lần
 chạy cổng đầu tiên xanh, mọi lần đỏ sau đó đều là một thứ bạn vừa làm, chứ không
 phải mười lỗi có sẵn phải lội qua. Mọi chỗ cần bạn viết đều mang chữ `TODO`.
 
-Cờ hữu ích: `--changes-system` (thêm sẵn mục Gỡ / Hoàn tác mà cổng sẽ đòi),
-`--scope linux-only` (xem dưới), `--date 2026-09-01` (bài tự lên đúng ngày đó,
-xem mục Lên lịch).
+Cờ hữu ích, tất cả đặt sau dấu `--`: `--changes-system` (thêm sẵn mục Gỡ /
+Hoàn tác mà cổng sẽ đòi), `--scope linux-only` (xem dưới), `--date 2026-09-01`
+(bài tự lên đúng ngày đó, xem mục Lên lịch).
 
 ### Hợp đồng của một bài
 
@@ -193,6 +197,24 @@ bao giờ trở thành cách lách.
 
 Và nó hiện lên trang bài, không nằm im trong JSON: người đọc FreeBSD thấy ngay
 dòng "Bài này chỉ áp dụng cho Linux" thay vì đọc hết rồi mới phát hiện.
+
+## Backlog và lịch soạn nháp
+
+`content/backlog.md` giữ danh sách chủ đề theo thứ tự. Một lịch tự động chạy hai
+lần mỗi tuần lấy mục đầu tiên chưa có bài, dựng bản nháp bằng `new-post`, viết
+nội dung, chạy `npm run gate:draft`, rồi mở PR.
+
+Nó dừng ở đó, và không thể đi xa hơn: `review_status: "reviewed"` là chữ ký nói
+rằng từng lệnh đã chạy thật trên các hệ ghi ở `tested_on`, mà môi trường tự động
+chỉ có Ubuntu và không có egress để đối chiếu tài liệu. Chữ ký đó là của bạn.
+
+Nên PR do lịch tạo ra luôn ở dạng nháp, kèm phần liệt kê lệnh nào đã chạy thật ở
+đâu và lệnh nào mới chỉ viết theo tài liệu. Việc của bạn là chạy thử, bổ sung
+`tested_on`, đổi `review_status`, chuyển sang `content/posts/` rồi merge.
+
+Backlog chỉ được đọc, không được máy sửa: bài đã viết hay chưa thì suy ra từ
+`content/posts/`, `content/drafts/` và các PR đang mở. Để máy tự đánh dấu thì hai
+PR mở cùng lúc sẽ sửa cùng một dòng và xung đột.
 
 ## Lên lịch: bài tự xuất bản
 
