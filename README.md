@@ -198,6 +198,24 @@ bao giờ trở thành cách lách.
 Và nó hiện lên trang bài, không nằm im trong JSON: người đọc FreeBSD thấy ngay
 dòng "Bài này chỉ áp dụng cho Linux" thay vì đọc hết rồi mới phát hiện.
 
+## Backlog và lịch soạn nháp
+
+`content/backlog.md` giữ danh sách chủ đề theo thứ tự. Một lịch tự động chạy hai
+lần mỗi tuần lấy mục đầu tiên chưa có bài, dựng bản nháp bằng `new-post`, viết
+nội dung, chạy `npm run gate:draft`, rồi mở PR.
+
+Nó dừng ở đó, và không thể đi xa hơn: `review_status: "reviewed"` là chữ ký nói
+rằng từng lệnh đã chạy thật trên các hệ ghi ở `tested_on`, mà môi trường tự động
+chỉ có Ubuntu và không có egress để đối chiếu tài liệu. Chữ ký đó là của bạn.
+
+Nên PR do lịch tạo ra luôn ở dạng nháp, kèm phần liệt kê lệnh nào đã chạy thật ở
+đâu và lệnh nào mới chỉ viết theo tài liệu. Việc của bạn là chạy thử, bổ sung
+`tested_on`, đổi `review_status`, chuyển sang `content/posts/` rồi merge.
+
+Backlog chỉ được đọc, không được máy sửa: bài đã viết hay chưa thì suy ra từ
+`content/posts/`, `content/drafts/` và các PR đang mở. Để máy tự đánh dấu thì hai
+PR mở cùng lúc sẽ sửa cùng một dòng và xung đột.
+
 ## Lên lịch: bài tự xuất bản
 
 `meta.date` là ngày bài lên, tính theo **00:00 giờ Việt Nam**. Bài có ngày ở
