@@ -4,6 +4,18 @@
   "compatibility_date": "2026-08-25",
   "assets": { "directory": "./assets", "binding": "ASSETS" },
 
+  // Domain nằm trong git, không nằm trong dashboard. Bản deploy tự khai nó phục
+  // vụ ở đâu, và `wrangler deploy` in ra domain đó — thay vì phải mở dashboard
+  // mới biết bản vừa lên có tới được người đọc hay không.
+  "routes": [{ "pattern": "nix.no.id.vn", "custom_domain": true }],
+
+  // Cùng một nội dung ở ba địa chỉ — custom domain, workers.dev, và một Preview
+  // URL cho mỗi version — là ba bản trùng nhau của chính mình. Đúng thứ mà cờ
+  // `noindex` trong site.json đang được bật để tránh, chỉ khác là lần này bản
+  // sao do hạ tầng sinh ra chứ không phải do site khác.
+  "workers_dev": false,
+  "preview_urls": false,
+
   // Nội dung phải được gộp vào bundle lúc build vì Worker không đọc được
   // filesystem lúc chạy, và manifest là artifact dẫn xuất nằm ngoài git. Để bước
   // dựng nó ở đây thì mọi đường vào đều có nó — `npm run deploy`, `wrangler
