@@ -42,7 +42,7 @@ from pathlib import Path
 from threading import Lock
 from concurrent.futures import ThreadPoolExecutor
 
-from content import ContentError, Post, load_posts
+from content import ROOT, ContentError, Post, load_posts
 
 USER_AGENT = "nix-daily-link-check/1.0 (+https://github.com/ndlong78/nix)"
 HREF_RE = re.compile(r'href=["\'](https?://[^"\'\s]+)["\']', re.IGNORECASE)
@@ -239,6 +239,26 @@ def collect_urls(posts: list[Post]) -> dict[str, list[str]]:
     return dict(found)
 
 
+def platform_docs() -> dict[str, list[str]]:
+    """URL tài liệu trong platforms.json cũng phải còn sống.
+
+    Chúng là thứ người viết bài mở ra để đối chiếu trước khi viết. Một URL chết ở
+    đây không làm bài nào sai ngay, nhưng nó làm người viết tiếp theo mất đường
+    tra — và không có gì khác trong repo phát hiện được.
+    """
+    path = ROOT / "content" / "platforms.json"
+    try:
+        targets = json.loads(path.read_text(encoding="utf-8")).get("targets", [])
+    except (OSError, json.JSONDecodeError):
+        return {}
+    found: dict[str, list[str]] = defaultdict(list)
+    for target in targets:
+        url = target.get("docs")
+        if isinstance(url, str) and url.startswith("https://"):
+            found[url].append(f"platforms.json · {target.get('name', '?')}")
+    return dict(found)
+
+
 def _polite_fetch(timeout: float):
     """Nối tiếp theo từng host, song song giữa các host."""
     locks: dict[str, Lock] = defaultdict(Lock)
@@ -332,6 +352,8 @@ def main(argv=None, fetch=None, sleep=time.sleep, today: date | None = None) -> 
         return 1
 
     origins = collect_urls(posts)
+    for url, where in platform_docs().items():
+        origins.setdefault(url, []).extend(where)
     if not origins:
         print("Không có URL nào để kiểm.")
         return 0
