@@ -218,6 +218,24 @@ strong { font-weight: 640; }
   white-space: nowrap;
 }
 
+a.tag { text-decoration: none; transition: background-color 120ms ease; }
+a.tag:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.tag-count { opacity: 0.6; font-size: 0.9em; }
+
+/* Hàng trục: lối vào thứ hai của site, cho người tới vì chủ đề chứ không vì
+ * bài mới nhất. */
+.axis-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1.5rem;
+}
+
+.back-link {
+  margin-top: 2.5rem;
+  font-size: 0.9rem;
+}
+
 /* ---------- trang chủ ---------- */
 
 .hero { margin-bottom: 3.25rem; }

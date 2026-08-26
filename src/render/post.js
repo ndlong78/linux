@@ -7,6 +7,7 @@
 
 import { page, esc, absolute, jsonLd } from "./layout.js";
 import { postBody, seriesNeighbours } from "../content.js";
+import { slugify } from "../slug.js";
 import site from "../../site.json";
 
 function issueNumber(post) {
@@ -105,7 +106,7 @@ export function renderPost(post) {
 <div class="masthead">
 <span class="issue">#${issue}</span>
 <time class="masthead-date" datetime="${esc(post.date)}">${esc(post.date)}</time>
-<span class="tag">${esc(post.axis)}</span>
+<a class="tag" href="/truc/${esc(slugify(post.axis))}">${esc(post.axis)}</a>
 </div>
 <header class="post"><p class="eyebrow">${esc(post.eyebrow)}</p><h1>${esc(post.title)}</h1><p class="lede">${esc(post.lede)}</p></header>
 ${scopeNote(post)}

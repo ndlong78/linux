@@ -10,6 +10,7 @@
 // như vậy render không phụ thuộc storage nào.
 
 import manifest from "../content/manifest.json";
+import { slugify } from "./slug.js";
 
 /** @typedef {{issue:number,date:string,axis:string,slug:string,title:string,
  *   lede:string,description:string,eyebrow:string}} PostMeta */
@@ -76,4 +77,26 @@ export function seriesNeighbours(post, now = Date.now()) {
     previous: at > 0 ? sameAxis[at - 1] : null,
     next: at >= 0 && at < sameAxis.length - 1 ? sameAxis[at + 1] : null,
   };
+}
+
+/** Mọi trục có bài đã xuất bản, kèm số bài — dùng cho trang chủ và sitemap. */
+export function axes(now = Date.now()) {
+  const byName = new Map();
+  for (const post of allPosts(now)) {
+    const entry = byName.get(post.axis) || { name: post.axis, slug: slugify(post.axis), count: 0 };
+    entry.count += 1;
+    byName.set(post.axis, entry);
+  }
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, "vi"));
+}
+
+/**
+ * Bài trong một trục, CŨ NHẤT TRƯỚC.
+ * Trang chủ xếp mới nhất trước vì nó trả lời "có gì mới"; trang trục xếp ngược
+ * lại vì nó trả lời "bắt đầu từ đâu".
+ */
+export function postsInAxis(slug, now = Date.now()) {
+  return allPosts(now)
+    .filter((post) => slugify(post.axis) === slug)
+    .sort((a, b) => a.issue - b.issue);
 }

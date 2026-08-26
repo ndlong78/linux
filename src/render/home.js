@@ -1,5 +1,6 @@
 import { page, esc } from "./layout.js";
-import { allPosts } from "../content.js";
+import { allPosts, axes } from "../content.js";
+import { slugify } from "../slug.js";
 import site from "../../site.json";
 
 function card(post) {
@@ -16,6 +17,18 @@ function card(post) {
 </li>`;
 }
 
+/** Hàng trục dưới hero: lối vào thứ hai, cho người tới vì chủ đề chứ không vì bài mới. */
+function axisNav(list) {
+  if (!list.length) return "";
+  const links = list
+    .map(
+      (axis) =>
+        `<a class="tag" href="/truc/${esc(axis.slug)}">${esc(axis.name)} <span class="tag-count">${axis.count}</span></a>`,
+    )
+    .join("\n");
+  return `<nav class="axis-nav" aria-label="Các trục">\n${links}\n</nav>`;
+}
+
 export function renderHome() {
   const posts = allPosts();
   const items = posts.length
@@ -28,6 +41,7 @@ export function renderHome() {
     body: `<section class="hero">
 <h1>${esc(site.title)}</h1>
 <p class="hero-lede">${esc(site.description)}</p>
+${axisNav(axes())}
 </section>
 <section class="post-index" aria-label="Danh sách bài">
 <h2 class="section-label">Bài đã đăng</h2>

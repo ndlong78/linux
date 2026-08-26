@@ -1,4 +1,4 @@
-import { allPosts } from "../content.js";
+import { allPosts, axes } from "../content.js";
 import { absolute, esc } from "./layout.js";
 import site from "../../site.json";
 
@@ -35,6 +35,7 @@ export function renderSitemap() {
   // nội dung thay đổi.
   const entries = [
     { loc: absolute(""), lastmod: null },
+    ...axes().map((axis) => ({ loc: absolute(`truc/${axis.slug}`), lastmod: null })),
     ...allPosts().map((post) => ({
       loc: absolute(`posts/${post.slug}`),
       lastmod: post.last_verified || post.date || null,
