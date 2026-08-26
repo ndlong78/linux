@@ -130,6 +130,30 @@ liên quan gì tới nội dung, và đó là kiểu đỏ mà người ta học
 Cờ đó không im lặng: nó vẫn in đủ danh sách URL chưa kiểm được kèm một dòng cảnh
 báo. Chạy `npm run links` ở máy có mạng để có kết luận thật.
 
+## Phiên bản hệ điều hành mà series nhắm tới
+
+`content/platforms.json` giữ ma trận đó, và nó là bản duy nhất — cổng nội dung
+đọc danh sách tên hệ từ đây thay vì chép lại vào code.
+
+| Hệ | Phiên bản mục tiêu |
+|---|---|
+| Ubuntu / Xubuntu | 26.04 LTS |
+| Debian | 13 (Trixie) |
+| Fedora | 44 |
+| FreeBSD | 15.0-RELEASE |
+
+**Nâng phiên bản ở file này không làm bài nào tự nhiên được kiểm lại.** Ma trận
+nói series *nhắm tới* đâu; `tested_on` của từng bài nói bài đó *đã chạy thật* ở
+đâu. Hai thứ khác nhau, và chỉ một trong hai đổi được bằng cách gõ phím.
+
+Nên khi bạn bump ma trận, việc còn lại là chạy lại từng bài trên phiên bản mới,
+rồi mới sửa `tested_on` và `last_verified` của bài đó. Bài nào chưa chạy lại thì
+cứ để nguyên bằng chứng cũ — nó vẫn đúng, chỉ là cũ.
+
+Cổng nội dung kiểm một điều duy nhất về trường này: `tested_on` phải nhắc tới ít
+nhất một hệ có trong ma trận. Đủ để bắt lỗi gõ sai (`Ubunut 26.04`) và bắt trường
+bị điền cho có, mà không ép mọi bài phải chạy trên cả năm hệ.
+
 ## Viết một bài
 
 ```bash

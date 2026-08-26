@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import re
 import sys
 from pathlib import Path
@@ -53,13 +54,25 @@ TITLE_MAX = TITLE_RENDERED_MAX - TITLE_PREFIX_LEN - 1
 # vào description — nó đi thẳng vào <meta name="description"> và vào <description>
 # của feed — nên ngưỡng ở đây chính là mốc cắt.
 DESCRIPTION_MAX = 160
-DISTRO_PATTERNS = {
-    "Ubuntu": r"\bUbuntu\b",
-    "Xubuntu": r"\bXubuntu\b",
-    "Debian": r"\bDebian\b",
-    "Fedora": r"\bFedora\b",
-    "FreeBSD": r"\bFreeBSD\b",
-}
+# Danh sách hệ mà series nhắm tới nằm ở content/platforms.json, không lặp lại ở
+# đây. Chép nó vào code là tạo bản thứ hai của cùng một dữ liệu — đúng lớp lỗi mà
+# cả repo này được dựng để tránh.
+PLATFORMS_PATH = Path(__file__).resolve().parents[1] / "content" / "platforms.json"
+
+
+def _load_platforms() -> list[dict]:
+    try:
+        data = json.loads(PLATFORMS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ContentError(f"{PLATFORMS_PATH.name}: không đọc được ({exc})") from exc
+    targets = data.get("targets")
+    if not isinstance(targets, list) or not targets:
+        raise ContentError(f"{PLATFORMS_PATH.name}: thiếu danh sách `targets`")
+    return targets
+
+
+PLATFORMS = _load_platforms()
+DISTRO_PATTERNS = {p["name"]: rf"\b{re.escape(p['name'])}\b" for p in PLATFORMS}
 
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 HEADING_RE = re.compile(r"<h2[^>]*>(.*?)</h2>", re.IGNORECASE | re.DOTALL)
@@ -119,8 +132,15 @@ def _check_meta(post: Post, errors: list[str], allow_draft: bool) -> None:
         say("meta.last_verified phải là ISO YYYY-MM-DD")
     if not isinstance(meta.get("changes_system"), bool):
         say("meta.changes_system phải là boolean")
-    if not isinstance(meta.get("tested_on"), list) or not meta.get("tested_on"):
+    tested_on = meta.get("tested_on")
+    if not isinstance(tested_on, list) or not tested_on:
         say("meta.tested_on phải là danh sách OS/version đã test")
+    elif not any(
+        name in str(entry) for entry in tested_on for name in DISTRO_PATTERNS
+    ):
+        # Bắt lỗi gõ sai tên hệ ("Ubunut 26.04") và bắt trường bị điền cho có.
+        # Không đòi phải đủ mọi hệ: chạy được trên đâu thì ghi đúng chỗ đó.
+        say(f"meta.tested_on không nhắc tới hệ nào trong {sorted(DISTRO_PATTERNS)}")
     # Bản nháp được kiểm bằng đúng bộ quy tắc này, chỉ trừ một điều: nó chưa
     # tự nhận là đã review. Mọi lỗi khác vẫn phải đỏ ngay lúc còn nháp — biết
     # sớm rẻ hơn biết lúc sắp merge.
