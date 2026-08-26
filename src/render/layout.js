@@ -31,7 +31,11 @@ export function head(page) {
     `<meta name="description" content="${esc(page.description)}">`,
     `<link rel="canonical" href="${esc(canonical)}">`,
     `<link rel="alternate" type="application/rss+xml" title="${esc(site.title)} RSS" href="${esc(absolute(site.feed_path))}">`,
-    '<link rel="stylesheet" href="/assets/style.css">',
+    // Workers static assets ánh xạ thư mục `assets/` vào GỐC URL, nên
+    // `assets/style.css` được phục vụ ở `/style.css` chứ không phải
+    // `/assets/style.css`. Đường dẫn sai thì trang vẫn 200, chỉ là không có CSS
+    // — kiểu hỏng không một test HTML nào bắt được. Xem test/assets.test.js.
+    '<link rel="stylesheet" href="/style.css">',
     `<meta property="og:type" content="${esc(page.ogType || "website")}">`,
     `<meta property="og:title" content="${esc(page.title)}">`,
     `<meta property="og:description" content="${esc(page.description)}">`,
@@ -74,13 +78,22 @@ ${head({ title, description, canonicalPath, ogType, noindex })}${headExtra ? `\n
 </head>
 <body>
 <a class="skip-link" href="#main">Đi tới nội dung chính</a>
+<header class="site-header">
 <nav class="global-nav" aria-label="Điều hướng chính">
 <a class="global-nav-brand" href="/">${esc(site.title)}</a>
+<span class="global-nav-links">
+<a href="/${esc(site.feed_path)}">RSS</a>
+</span>
 </nav>
+</header>
 <main id="main">
 ${body}
 </main>
-<footer><a href="/">← ${esc(site.title)}</a></footer>
+<footer class="site-footer">
+<p class="site-footer-brand"><a href="/">${esc(site.title)}</a></p>
+<p class="site-footer-note">${esc(site.description)}</p>
+<p class="site-footer-links"><a href="/${esc(site.feed_path)}">RSS</a> · <a href="/${esc(site.sitemap_path)}">Sitemap</a></p>
+</footer>
 </body>
 </html>
 `;
