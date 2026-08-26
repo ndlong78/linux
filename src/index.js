@@ -3,6 +3,7 @@
 import { renderHome } from "./render/home.js";
 import { renderPost } from "./render/post.js";
 import { renderFeed, renderSitemap } from "./render/feed.js";
+import { renderAxis } from "./render/axis.js";
 import { renderNotFound } from "./render/notfound.js";
 import { postBySlug } from "./content.js";
 import site from "../site.json";
@@ -38,6 +39,11 @@ export function handle(request) {
       ? "User-agent: *\nDisallow: /\n"
       : `User-agent: *\nAllow: /\n\nSitemap: ${new URL(site.sitemap_path, site.url)}\n`;
     return respond(body, "text/plain; charset=utf-8");
+  }
+
+  if (pathname.startsWith("/truc/")) {
+    const html = renderAxis(pathname.slice("/truc/".length));
+    if (html) return respond(html, HTML);
   }
 
   const post = pathname.startsWith("/posts/") && postBySlug(pathname.slice("/posts/".length));

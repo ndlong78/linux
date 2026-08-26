@@ -7,6 +7,7 @@
 
 import { page, esc, absolute, jsonLd } from "./layout.js";
 import { postBody, seriesNeighbours } from "../content.js";
+import { slugify } from "../slug.js";
 import site from "../../site.json";
 
 function issueNumber(post) {
@@ -44,7 +45,7 @@ function sources(post) {
   const items = list
     .map((source) => {
       const host = new URL(source.url).hostname.replace(/^www\./, "");
-      return `<li><a href="${esc(source.url)}" rel="noopener">${esc(source.title)}</a> <span class="source-host">${esc(host)}</span> <span class="source-kind">${esc(source.kind)}</span></li>`;
+      return `<li><a href="${esc(source.url)}" rel="noopener">${esc(source.title)}</a><span class="source-meta"><span class="source-host">${esc(host)}</span><span class="source-kind">${esc(source.kind)}</span></span></li>`;
     })
     .join("\n");
   return `<section class="sources"><h2>Nguồn</h2>\n<ol>\n${items}\n</ol></section>`;
@@ -102,9 +103,13 @@ export function renderPost(post) {
     ogType: "article",
     headExtra: structuredData(post),
     body: `<article class="post">
-<div class="masthead"><span class="issue">#${issue} · ${esc(post.date)}</span><span class="axis">${esc(post.axis)}</span></div>
-${scopeNote(post)}
+<div class="masthead">
+<span class="issue">#${issue}</span>
+<time class="masthead-date" datetime="${esc(post.date)}">${esc(post.date)}</time>
+<a class="tag" href="/truc/${esc(slugify(post.axis))}">${esc(post.axis)}</a>
+</div>
 <header class="post"><p class="eyebrow">${esc(post.eyebrow)}</p><h1>${esc(post.title)}</h1><p class="lede">${esc(post.lede)}</p></header>
+${scopeNote(post)}
 ${body}
 ${sources(post)}
 ${provenance(post)}
