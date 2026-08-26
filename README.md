@@ -133,19 +133,23 @@ báo. Chạy `npm run links` ở máy có mạng để có kết luận thật.
 ## Viết một bài
 
 ```bash
-npm run new-post post-002-ten-bai --axis "Networking"
+npm run new-post -- post-002-ten-bai --axis "Networking"
 npm run gate:draft        # kiểm; khung vừa sinh ra đã qua sẵn
 npm run dev:draft         # xem thử trang thật
 ```
+
+Dấu `--` là bắt buộc và không bỏ được: thiếu nó thì npm hiểu `--axis` là cờ của
+chính npm, nuốt luôn tên cờ và chỉ đẩy giá trị trần xuống script — lỗi hiện ra ở
+tận argparse dưới dạng `unrecognized arguments`, không nhắc gì tới npm.
 
 `new-post` dựng `content/drafts/<slug>/{meta.json,body.html}` với đủ heading bắt
 buộc và số hiệu kế tiếp. Khung đó **qua được cổng ngay** — chủ đích là để lần
 chạy cổng đầu tiên xanh, mọi lần đỏ sau đó đều là một thứ bạn vừa làm, chứ không
 phải mười lỗi có sẵn phải lội qua. Mọi chỗ cần bạn viết đều mang chữ `TODO`.
 
-Cờ hữu ích: `--changes-system` (thêm sẵn mục Gỡ / Hoàn tác mà cổng sẽ đòi),
-`--scope linux-only` (xem dưới), `--date 2026-09-01` (bài tự lên đúng ngày đó,
-xem mục Lên lịch).
+Cờ hữu ích, tất cả đặt sau dấu `--`: `--changes-system` (thêm sẵn mục Gỡ /
+Hoàn tác mà cổng sẽ đòi), `--scope linux-only` (xem dưới), `--date 2026-09-01`
+(bài tự lên đúng ngày đó, xem mục Lên lịch).
 
 ### Hợp đồng của một bài
 
