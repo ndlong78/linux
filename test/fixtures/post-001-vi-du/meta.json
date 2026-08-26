@@ -9,8 +9,8 @@
   "description": "Bài fixture cho bộ test: đủ heading bắt buộc, có khối FreeBSD riêng và nhắc đủ các distro.",
   "review_status": "reviewed",
   "tested_on": [
-    "Ubuntu 24.04 LTS",
-    "FreeBSD 14.4-RELEASE"
+    "Ubuntu 26.04 LTS",
+    "FreeBSD 15.0-RELEASE"
   ],
   "last_verified": "2026-06-01",
   "changes_system": false,

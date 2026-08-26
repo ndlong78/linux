@@ -9,11 +9,21 @@
   "lede": "Fixture cho chủ đề không có đối ứng FreeBSD: không khối BSD, không nhãn bsd, và vẫn phải qua được mọi quy tắc còn lại.",
   "description": "Fixture thứ ba: kiểm rằng scope=linux-only nới đúng hai quy tắc FreeBSD và không nới bất cứ thứ gì khác.",
   "review_status": "reviewed",
-  "tested_on": ["Ubuntu 24.04 LTS"],
+  "tested_on": [
+    "Ubuntu 26.04 LTS"
+  ],
   "last_verified": "2026-06-03",
   "changes_system": false,
   "sources": [
-    {"title": "man7.org — systemd(1)", "url": "https://man7.org/linux/man-pages/man1/systemd.1.html", "kind": "official"},
-    {"title": "freedesktop — systemd.unit(5)", "url": "https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html", "kind": "upstream"}
+    {
+      "title": "man7.org — systemd(1)",
+      "url": "https://man7.org/linux/man-pages/man1/systemd.1.html",
+      "kind": "official"
+    },
+    {
+      "title": "freedesktop — systemd.unit(5)",
+      "url": "https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html",
+      "kind": "upstream"
+    }
   ]
 }

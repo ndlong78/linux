@@ -24,7 +24,7 @@
 <ul>
 <li><code>ID</code> — định danh máy đọc của distro: <code>ubuntu</code>, <code>debian</code>, <code>fedora</code>. Đây là trường bạn dùng trong script.</li>
 <li><code>ID_LIKE</code> — họ distro cha. Ubuntu khai <code>ID_LIKE=debian</code>, nghĩa là mọi thứ viết cho Debian gần như chắc chắn chạy được.</li>
-<li><code>VERSION_ID</code> — phiên bản dạng ngắn, ví dụ <code>24.04</code>. Dùng cái này chứ đừng cắt chuỗi từ <code>PRETTY_NAME</code>.</li>
+<li><code>VERSION_ID</code> — phiên bản dạng ngắn, ví dụ <code>26.04</code>. Dùng cái này chứ đừng cắt chuỗi từ <code>PRETTY_NAME</code>.</li>
 </ul>
 <p><code>PRETTY_NAME</code> là chuỗi để in ra cho người đọc. Nó đẹp, và nó không phải thứ để so sánh trong script.</p>
 </li>
@@ -77,12 +77,12 @@ ID_LIKE=debian</code></pre>
 <p>Bước 3 và bước 4 trên cùng máy đó:</p>
 <pre><code class="language-text">Linux 6.18.44-fc-v21 x86_64
 ubuntu 24.04</code></pre>
-<p>Chuỗi phiên bản kernel của bạn gần như chắc chắn khác — phần đuôi là do bản dựng kernel quyết định. Ubuntu 24.04 cài theo cách thông thường cho ra dạng <code>6.8.0-51-generic</code>; máy dùng để soạn bài này chạy một kernel dựng riêng. Cái cần khớp là ba phần: tên kernel, số phiên bản, kiến trúc.</p>
+<p>Chuỗi phiên bản kernel của bạn gần như chắc chắn khác — phần đuôi là do bản dựng kernel quyết định. Ubuntu 24.04 cài theo cách thông thường cho ra dạng <code>6.8.0-51-generic</code>, còn Ubuntu 26.04 LTS đi với kernel dòng <code>7.0</code>; máy dùng để soạn bài này chạy một kernel dựng riêng. Cái cần khớp là ba phần: tên kernel, số phiên bản, kiến trúc.</p>
 <p>Trên FreeBSD, cùng hai bước ấy cho ra dạng khác hẳn — <code>uname -s</code> đổi giá trị, và <code>freebsd-version</code> mới là nơi có phiên bản hệ điều hành:</p>
-<pre class="bsd"><code class="language-text">FreeBSD 14.4-RELEASE amd64
-14.4-RELEASE
-14.4-RELEASE
-14.4-RELEASE</code></pre>
+<pre class="bsd"><code class="language-text">FreeBSD 15.0-RELEASE amd64
+15.0-RELEASE
+15.0-RELEASE
+15.0-RELEASE</code></pre>
 <p>Đối chiếu kết quả của bạn với bảng sau — đây là bảng bạn sẽ còn quay lại suốt series:</p>
 <table>
 <thead><tr><th>Hệ điều hành</th><th><code>ID</code></th><th><code>ID_LIKE</code></th><th>Trình quản lý gói</th></tr></thead>

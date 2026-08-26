@@ -91,7 +91,7 @@ describe("trang bài", () => {
 
   test("xuất xứ: đã kiểm trên đâu, kiểm lần cuối bao giờ", async () => {
     const html = await text(POST_1);
-    expect(html).toContain("Ubuntu 24.04 LTS, FreeBSD 14.4-RELEASE");
+    expect(html).toContain("Ubuntu 26.04 LTS, FreeBSD 15.0-RELEASE");
     expect(html).toContain('<time datetime="2026-06-01">');
   });
 

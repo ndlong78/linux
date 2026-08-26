@@ -1,0 +1,71 @@
+{
+  "_comment": "Ma trận phiên bản mà series nhắm tới. Đây là MỤC TIÊU, không phải bằng chứng: nâng phiên bản ở đây không làm bài nào tự nhiên được kiểm lại. Bằng chứng nằm ở `tested_on` của từng bài, và chỉ đổi được bằng cách chạy thật. Trường `verified` ghi lần cuối có người ĐỌC ĐƯỢC tài liệu chính chủ để xác nhận các con số ở dòng đó; null nghĩa là chưa xác nhận.",
+  "updated": "2026-08-26",
+  "targets": [
+    {
+      "name": "Ubuntu",
+      "version": "26.04 LTS",
+      "codename": "Resolute Raccoon",
+      "released": "2026-04-23",
+      "supported_until": "2031-04",
+      "id": "ubuntu",
+      "id_like": "debian",
+      "packages": "apt",
+      "kernel": "7.0",
+      "docs": "https://documentation.ubuntu.com/release-notes/26.04/",
+      "verified": "2026-08-26"
+    },
+    {
+      "name": "Xubuntu",
+      "version": "26.04 LTS",
+      "codename": "Resolute Raccoon",
+      "released": "2026-04-23",
+      "supported_until": null,
+      "id": "ubuntu",
+      "id_like": "debian",
+      "packages": "apt",
+      "kernel": null,
+      "docs": "https://xubuntu.org/releasedocs/26.04/release-notes/",
+      "verified": null
+    },
+    {
+      "name": "Debian",
+      "version": "13 (Trixie)",
+      "codename": "Trixie",
+      "released": null,
+      "supported_until": null,
+      "id": "debian",
+      "id_like": null,
+      "packages": "apt",
+      "kernel": null,
+      "docs": "https://www.debian.org/releases/trixie/",
+      "verified": null
+    },
+    {
+      "name": "Fedora",
+      "version": "44",
+      "codename": null,
+      "released": null,
+      "supported_until": null,
+      "id": "fedora",
+      "id_like": null,
+      "packages": "dnf",
+      "kernel": null,
+      "docs": "https://docs.fedoraproject.org/en-US/fedora-server/",
+      "verified": null
+    },
+    {
+      "name": "FreeBSD",
+      "version": "15.0-RELEASE",
+      "codename": null,
+      "released": null,
+      "supported_until": null,
+      "id": "freebsd",
+      "id_like": null,
+      "packages": "pkg",
+      "kernel": null,
+      "docs": "https://docs.freebsd.org/en/books/handbook/",
+      "verified": null
+    }
+  ]
+}

@@ -105,6 +105,25 @@ def test_description_dung_bang_nguong_van_qua(workspace: Path):
     assert run(workspace) == []
 
 
+def test_tested_on_go_sai_ten_he_bi_bat(workspace: Path):
+    """Bắt lỗi gõ sai và bắt trường bị điền cho có."""
+    edit_meta(workspace, tested_on=["Ubunut 26.04"])
+    assert any("không nhắc tới hệ nào" in e for e in run(workspace))
+
+
+def test_tested_on_chi_can_mot_he_trong_ma_tran(workspace: Path):
+    """Chạy được trên đâu thì ghi đúng chỗ đó — không đòi phải đủ mọi hệ."""
+    edit_meta(workspace, tested_on=["Ubuntu 26.04 LTS"])
+    assert run(workspace) == []
+
+
+def test_ma_tran_nen_tang_doc_tu_file(workspace: Path):
+    """content/platforms.json là bản duy nhất của danh sách hệ, không chép vào code."""
+    names = set(validate_content.DISTRO_PATTERNS)
+    assert names == {p["name"] for p in validate_content.PLATFORMS}
+    assert "Ubuntu" in names and "FreeBSD" in names
+
+
 def test_review_status_draft_khong_qua_duoc(workspace: Path):
     edit_meta(workspace, review_status="draft")
     assert any("review_status" in e for e in run(workspace))

@@ -18,6 +18,7 @@ from datetime import date
 from pathlib import Path
 
 from content import POSTS_DIR, load_posts
+from validate_content import PLATFORMS
 
 ROOT = Path(__file__).resolve().parents[1]
 DRAFTS_DIR = ROOT / "content" / "drafts"
@@ -99,7 +100,12 @@ def build_meta(
         "lede": "TODO: câu dẫn — một hai câu nói vì sao bài này đáng đọc.",
         "description": "TODO: SEO copy riêng, tối đa 160 ký tự và phải khác lede.",
         "review_status": "draft",
-        "tested_on": ["TODO: OS và phiên bản đã thật sự chạy các lệnh trong bài"],
+        # Nêu sẵn phiên bản mục tiêu để tác giả biết cần chạy ở đâu — nhưng vẫn
+        # là TODO, vì trường này ghi nơi đã chạy THẬT chứ không phải nơi định chạy.
+        "tested_on": [
+            "TODO — thay bằng hệ đã chạy thật. Mục tiêu của series: "
+            + ", ".join(f"{p['name']} {p['version']}" for p in PLATFORMS)
+        ],
         # Ngày kiểm, không phải ngày lên: bài viết hôm nay cho tuần sau vẫn được
         # kiểm hôm nay.
         "last_verified": date.today().isoformat(),
