@@ -6,6 +6,10 @@ thay đổi làm **sai** một bài viết theo phiên bản cũ.
 
 Trạng thái xác nhận nằm ở `platforms.json`, trường `verified`.
 
+> Bài được trỏ tới bằng **slug** hoặc bằng **tên nhánh**, không bằng số hiệu. Số
+> hiệu trong `backlog.md` đổi mỗi lần danh sách được sắp lại; slug thì không.
+
+
 ---
 
 ## Ubuntu 26.04 LTS — đã đọc trực tiếp, 2026-08-26
@@ -24,8 +28,8 @@ phải GNU coreutils. Đổi qua lại:
     sudo apt install coreutils-from-gnu --allow-remove-essential
     sudo apt install coreutils-from-uutils --allow-remove-essential
 
-→ **Ảnh hưởng #003** (đọc file không cần editor) và mọi bài dán output của lệnh
-coreutils. Cờ hiếm và định dạng output có thể khác GNU; bài nào dựa vào một cờ
+→ **Ảnh hưởng `post-003-doc-file-khong-can-editor`, `post-039-grep-sed-awk`** và
+mọi bài dán output của lệnh coreutils. Cờ hiếm và định dạng output có thể khác GNU; bài nào dựa vào một cờ
 lạ thì phải nói rõ đang chạy bản nào.
 
 ### APT 3.1 (từ 2.7 ở 24.04)
@@ -40,42 +44,42 @@ Có giao diện lịch sử mới:
 
 APT cũng chuyển từ GnuTLS/gcrypt sang OpenSSL cho TLS và băm file.
 
-→ **Ảnh hưởng #014** (cài, gỡ, ghim gói) và **#015** (kho gói, khoá GPG). Bài
-#014 nên dạy `history-undo` — đó chính là mục "Gỡ / Hoàn tác" mà cổng nội dung
-đòi, và giờ nó có lệnh chính chủ.
+→ **Ảnh hưởng `post-009-cai-go-ghim-goi`** và **`post-010-kho-goi-va-khoa-gpg`**.
+Bài cài/gỡ gói nên dạy `history-undo` — đó chính là mục "Gỡ / Hoàn tác" mà cổng
+nội dung đòi, và giờ nó có lệnh chính chủ.
 
 ### Linux kernel 7.0 (từ 6.8)
 
 Bản GA generic dùng kernel 7.0. Real-time kernel giờ nằm trong kho chính, dùng
 được miễn phí không cần Ubuntu Pro. Livepatch hỗ trợ thêm ARM64.
 
-→ **Ảnh hưởng #001**: ví dụ chuỗi kernel `6.8.0-51-generic` là dạng của 24.04;
-trên 26.04 nó thuộc dòng `7.0`.
+→ **Ảnh hưởng `post-001-nhan-dien-he-dieu-hanh`**: ví dụ chuỗi kernel
+`6.8.0-51-generic` là dạng của 24.04; trên 26.04 nó thuộc dòng `7.0`.
 
 ### systemd 259.5
 
-→ **Ảnh hưởng #010–#013** (unit, journalctl, viết service, timer) và **#029**
-(cgroup v2). Kiểm lại cờ và tên thuộc tính trước khi viết.
+→ **Ảnh hưởng cả nhánh systemd (cấp 2)**. Kiểm lại cờ và tên thuộc tính trước
+khi viết — xem mục "Mốc systemd chung" ở dưới.
 
 ### OpenSSH 10.2 (từ 9.6)
 
 Gói GSS-API tách riêng thành `openssh-client-gssapi` và `openssh-server-gssapi`.
 Các thuật toán `gss-group14-sha1-` và `gss-gex-sha1-` đã bị bỏ theo RFC 8732.
 
-→ **Ảnh hưởng #017** (SSH: khoá, agent, config).
+→ **Ảnh hưởng `post-013-ssh-khoa-va-config`**.
 
 ### Netplan 1.2 (từ 1.0)
 
 Có thiết lập riêng cho `systemd-networkd-wait-online`; cờ parser để bỏ qua cấu
 hình hỏng thay vì chết cả file.
 
-→ **Ảnh hưởng #016** (IP, route, DNS) và **#018** (mở/đóng cổng).
+→ **Ảnh hưởng `post-025-cau-hinh-mang-tinh`** và **`post-029-mo-dong-cong`**.
 
 ### AppArmor
 
 Thêm nhiều profile mới cho ứng dụng, và có chế độ enforce.
 
-→ **Ảnh hưởng #030** (SELinux và AppArmor).
+→ **Ảnh hưởng `post-030-selinux-apparmor`**.
 
 ### Khác
 
@@ -95,20 +99,21 @@ GNOME 48. Bỏ trình cài đặt cho i386 và armel, bỏ hẳn mipsel; thêm r
 
 Ubuntu 26.04 đi với systemd 259.5, Debian 13 đi với 257. Chênh hai vòng phát hành.
 
-→ **Ảnh hưởng #020–#023** (nhánh systemd, cấp 2). Bài dùng cờ hoặc thuộc tính chỉ
-có từ 258 trở lên sẽ đúng trên Ubuntu và sai trên Debian. Kiểm `systemctl --version`
+→ **Ảnh hưởng cả nhánh systemd (cấp 2)**. Bài dùng cờ hoặc thuộc tính chỉ có từ
+258 trở lên sẽ đúng trên Ubuntu và sai trên Debian. Kiểm `systemctl --version`
 trên cả hai trước khi dán lệnh.
 
 ### Kernel 6.12 LTS
 
-→ **Ảnh hưởng #001**: ba hệ Linux mục tiêu giờ ở ba dòng kernel khác nhau —
+→ **Ảnh hưởng `post-001-nhan-dien-he-dieu-hanh`**: ba hệ Linux mục tiêu giờ ở ba
+dòng kernel khác nhau —
 Ubuntu 26.04 dòng 7.0, Fedora 44 dòng 6.19, Debian 13 dòng 6.12. Đúng cái bài #001
 muốn nói: `uname -r` không cho biết distro.
 
 ### Không còn trình cài đặt i386
 
-→ **Ảnh hưởng #001** phần kiến trúc: `uname -m` trả `i686` nghĩa là máy đó không
-cài mới Debian 13 được.
+→ **Ảnh hưởng `post-001-...`** phần kiến trúc: `uname -m` trả `i686` nghĩa là máy
+đó không cài mới Debian 13 được.
 
 ---
 
@@ -123,7 +128,7 @@ thức). GCC 16, LLVM 22, Ruby 4.0, Go 1.26, PHP 8.5.
 
 PackageKit đã chuyển sang backend **DNF5** dựng trên libdnf5.
 
-→ **Ảnh hưởng #009, #010** (nhánh Gói phần mềm, cấp 1). Phần lớn lệnh `dnf` giữ
+→ **Ảnh hưởng nhánh Gói phần mềm (cấp 1)**. Phần lớn lệnh `dnf` giữ
 nguyên cú pháp, nhưng output và một số tuỳ chọn khác bản cũ. Bài nào dán output
 của `dnf` phải chạy trên Fedora 44 thật, đừng chép từ bài viết thời dnf4.
 
@@ -147,10 +152,10 @@ Từ 15.0, hệ nền có thể cài và cập nhật như một tập gói từ
 quản trọn bằng `pkg(8)`. Đây là mặc định cho mọi ảnh VM và ảnh cloud công khai.
 15.0 gọi nó là technology preview và dự kiến thành cách chuẩn ở các bản sau.
 
-→ **Ảnh hưởng #001**: câu "sau `freebsd-update` mà chưa khởi động lại" chỉ đúng
+→ **Ảnh hưởng `post-001-...`**: câu "sau `freebsd-update` mà chưa khởi động lại" chỉ đúng
 với hệ cài theo lối cũ. Trên hệ pkgbase, đường cập nhật là `pkg upgrade`, và
 `freebsd-version -kru` vẫn là chỗ đọc ba con số.
-→ **Ảnh hưởng #009, #010** (Gói phần mềm): FreeBSD giờ có hai thứ cùng dùng
+→ **Ảnh hưởng nhánh Gói phần mềm (cấp 1)**: FreeBSD giờ có hai thứ cùng dùng
 `pkg` — gói ứng dụng và gói hệ nền. Bài phải nói rõ đang nói cái nào.
 
 ### Bỏ nền tảng 32-bit
@@ -158,11 +163,38 @@ với hệ cài theo lối cũ. Trên hệ pkgbase, đường cập nhật là `
 i386, armv6 và powerpc 32-bit đã bị loại; chỉ còn armv7 là nền tảng 32-bit cuối
 cùng. Ứng dụng 32-bit vẫn chạy được qua lớp tương thích trên bản 64-bit.
 
-→ **Ảnh hưởng #001** phần kiến trúc, cùng chỗ với ghi chú Debian ở trên.
+→ **Ảnh hưởng `post-001-...`** phần kiến trúc, cùng chỗ với ghi chú Debian ở trên.
 
 ### OpenZFS 2.4.0
 
-→ **Ảnh hưởng #016–#019** (nhánh Lưu trữ, cấp 2) và **#029** (snapshot).
+→ **Ảnh hưởng cả nhánh Lưu trữ (cấp 2)**, đặc biệt `post-019-zfs-co-ban`, và
+`post-034-snapshot-va-khoi-phuc`.
+
+---
+
+## Mốc systemd chung cho cả series
+
+| Hệ | systemd |
+|---|---|
+| Ubuntu 26.04 LTS | 259.5 |
+| Fedora 44 | 259.5 |
+| Debian 13 | **257** |
+| FreeBSD | không dùng systemd |
+
+**Viết cho 257.** Hai trong ba hệ Linux mục tiêu đi với 259.5, nhưng Debian 13 —
+bản stable, vòng đời dài nhất trong ba hệ — dừng ở 257. Bài dùng cờ hoặc thuộc
+tính chỉ có từ 258 trở lên sẽ chạy đúng trên Ubuntu và Fedora rồi chết trên
+Debian, và người đọc Debian sẽ nghĩ họ gõ sai.
+
+Quy tắc cho nhánh systemd (cấp 2) và mọi bài khác chạm tới unit:
+
+1. Mặc định chỉ dùng thứ có từ **257** trở xuống.
+2. Cần thứ mới hơn thì nói thẳng trong bài: *"cần systemd ≥ 258, Debian 13 chưa
+   có"*, và đưa cách làm thay thế.
+3. Kiểm bằng `systemctl --version` trước khi dán lệnh, đừng tin trí nhớ.
+
+Nguồn: <https://packages.fedoraproject.org/pkgs/systemd/systemd/> cho Fedora 44,
+release notes của Debian 13 và Ubuntu 26.04 cho hai hệ còn lại.
 
 ---
 

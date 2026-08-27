@@ -15,7 +15,8 @@
       "docs": "https://documentation.ubuntu.com/release-notes/26.04/",
       "verified": "2026-08-26",
       "verified_via": "read",
-      "source": "https://documentation.ubuntu.com/release-notes/26.04/"
+      "source": "https://documentation.ubuntu.com/release-notes/26.04/",
+      "systemd": "259.5"
     },
     {
       "name": "Xubuntu",
@@ -30,7 +31,8 @@
       "docs": "https://xubuntu.org/releasedocs/26.04/release-notes/",
       "verified": null,
       "verified_via": null,
-      "source": null
+      "source": null,
+      "systemd": null
     },
     {
       "name": "Debian",
@@ -45,7 +47,8 @@
       "docs": "https://www.debian.org/releases/trixie/",
       "verified": "2026-08-26",
       "verified_via": "search",
-      "source": "https://www.debian.org/News/2025/20250809"
+      "source": "https://www.debian.org/News/2025/20250809",
+      "systemd": "257"
     },
     {
       "name": "Fedora",
@@ -60,7 +63,9 @@
       "docs": "https://docs.fedoraproject.org/en-US/fedora-server/",
       "verified": "2026-08-26",
       "verified_via": "search",
-      "source": "https://fedoramagazine.org/announcing-fedora-linux-44/"
+      "source": "https://fedoramagazine.org/announcing-fedora-linux-44/",
+      "systemd": "259.5",
+      "source_systemd": "https://packages.fedoraproject.org/pkgs/systemd/systemd/"
     },
     {
       "name": "FreeBSD",
@@ -75,7 +80,8 @@
       "docs": "https://docs.freebsd.org/en/books/handbook/",
       "verified": "2026-08-26",
       "verified_via": "search",
-      "source": "https://www.freebsd.org/releases/15.1R/announce/"
+      "source": "https://www.freebsd.org/releases/15.1R/announce/",
+      "systemd": null
     }
   ]
 }
