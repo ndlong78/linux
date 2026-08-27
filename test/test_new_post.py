@@ -149,3 +149,33 @@ def test_eyebrow_sinh_tu_cap_va_nhanh(tmp_path: Path):
     assert meta["level"] == 3
     assert meta["axis"] == "Hiệu năng"
     assert meta["eyebrow"] == "Quản trị cấp cao · Hiệu năng"
+
+
+def test_tu_danh_so_khi_drafts_da_co_bai(tmp_path, monkeypatch):
+    """Số hiệu phải được tính trước khi tạo thư mục.
+
+    Lỗi thật đã gặp: main() gọi mkdir rồi mới gọi next_issue(), mà next_issue()
+    quét chính thư mục drafts đó — thư mục vừa tạo còn rỗng nên load_posts()
+    dừng vì thiếu meta.json. Công cụ chết, và để lại một thư mục rỗng khiến lần
+    chạy sau báo "đã tồn tại". Không cờ --issue thì lần nào cũng vỡ, tức là lịch
+    soạn nháp tự động không bao giờ chạy được.
+    """
+    drafts = tmp_path / "drafts"
+    assert (
+        new_post.main([
+            "post-002-bai-dau", "--level", "1", "--axis", "Tập tin",
+            "--drafts", str(drafts),
+        ])
+        == 0
+    )
+    # Lần thứ hai là lần từng vỡ: giờ drafts/ đã có một bài để quét qua.
+    assert (
+        new_post.main([
+            "post-003-bai-sau", "--level", "1", "--axis", "Tập tin",
+            "--drafts", str(drafts),
+        ])
+        == 0
+    )
+    second = json.loads((drafts / "post-003-bai-sau" / "meta.json").read_text(encoding="utf-8"))
+    first = json.loads((drafts / "post-002-bai-dau" / "meta.json").read_text(encoding="utf-8"))
+    assert second["issue"] == first["issue"] + 1

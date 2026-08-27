@@ -1,4 +1,4 @@
-import { allPosts, axes } from "../content.js";
+import { allPosts, axes, postsPage } from "../content.js";
 import { absolute, esc } from "./layout.js";
 import site from "../../site.json";
 
@@ -33,8 +33,17 @@ export function renderSitemap() {
   // `lastmod` lấy từ `last_verified`, không phải `date`: bài của series được
   // kiểm lại theo bản phát hành mới của distro, và lần kiểm lại đó mới là lần
   // nội dung thay đổi.
+  // Trang 2 trở đi cũng là URL thật và là đường duy nhất tới bài cũ, nên phải
+  // có trong sitemap — thiếu chúng là bài cũ chỉ còn tới được qua trang trục.
+  const { pageCount } = postsPage(1);
+  const pages = Array.from({ length: pageCount - 1 }, (_, i) => ({
+    loc: absolute(`trang/${i + 2}`),
+    lastmod: null,
+  }));
+
   const entries = [
     { loc: absolute(""), lastmod: null },
+    ...pages,
     ...axes().map((axis) => ({ loc: absolute(`truc/${axis.slug}`), lastmod: null })),
     ...allPosts().map((post) => ({
       loc: absolute(`posts/${post.slug}`),

@@ -347,8 +347,17 @@ git mv content/drafts/<slug> content/posts/<slug>
 rồi sửa `review_status` thành `reviewed`, cập nhật `tested_on` và `last_verified`
 cho khớp với những gì bạn vừa chạy, và chạy `npm run gate`.
 
-## Đang chạy song song
+## Cho phép lập chỉ mục
 
-`site.json` đặt `noindex: true` trong khi `linux.no.id.vn` còn phục vụ nội dung
-tương tự — hai domain cùng nội dung sẽ bị tính duplicate content. Tắt cờ đó khi
-`nix.no.id.vn` tiếp quản hẳn.
+`site.json` đặt `noindex: false`: `nix.no.id.vn` đã tiếp quản hẳn nên không còn
+hai domain cùng nội dung để lo duplicate content. Cờ này điều khiển hai chỗ cùng
+lúc — thẻ `<meta name="robots">` ở mọi trang và nội dung `/robots.txt` — nên bật
+tắt ở một chỗ, không sửa từng trang.
+
+Riêng trang 404 luôn `noindex` bất kể cờ, vì trang lỗi không bao giờ đáng vào
+kết quả tìm kiếm.
+
+**Cloudflare có thể ghi đè `/robots.txt` của Worker.** Nếu `curl https://nix.no.id.vn/robots.txt`
+trả về nội dung có khối `Content-Signal` mà repo này không hề sinh ra, thì đó là
+robots.txt do Cloudflare quản lý, bật trong dashboard (Security → Settings, hoặc
+mục AI Crawl Control). Tắt nó ở đó thì bản của Worker mới tới được bot.

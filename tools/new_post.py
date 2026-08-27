@@ -74,11 +74,17 @@ UNDO = """
 """
 
 
-def next_issue() -> int:
-    """Số hiệu kế tiếp, tính trên cả bài đã đăng lẫn bài còn nháp."""
+def next_issue(drafts: Path | None = None) -> int:
+    """Số hiệu kế tiếp, tính trên cả bài đã đăng lẫn bài còn nháp.
+
+    `drafts` phải đi theo cờ --drafts. Bỏ tham số này và luôn đọc DRAFTS_DIR thì
+    một lần chạy trỏ vào thư mục nháp khác vẫn đánh số theo thư mục mặc định —
+    và hai bản nháp trong cùng thư mục đó lĩnh cùng một số hiệu, lỗi chỉ lộ ra
+    ở cổng nội dung với thông báo "issue trùng".
+    """
     issues = [
         post.meta.get("issue", 0)
-        for directory in (POSTS_DIR, DRAFTS_DIR)
+        for directory in (POSTS_DIR, drafts or DRAFTS_DIR)
         for post in load_posts(directory)
         if isinstance(post.meta.get("issue"), int)
     ]
@@ -192,12 +198,18 @@ def main(argv=None) -> int:
         return 1
 
     linux_only = args.scope == "linux-only"
+    # Số hiệu phải tính TRƯỚC khi tạo thư mục. next_issue() quét content/drafts/,
+    # và một thư mục vừa mkdir còn rỗng sẽ làm load_posts() dừng vì thiếu
+    # meta.json — tức là công cụ tự làm hỏng đầu vào của chính nó, rồi bỏ lại
+    # một thư mục rỗng khiến lần chạy sau báo "đã tồn tại".
+    issue = args.issue or next_issue(Path(args.drafts))
+
     directory.mkdir(parents=True)
     (directory / "meta.json").write_text(
         json.dumps(
             build_meta(
                 args.slug,
-                args.issue or next_issue(),
+                issue,
                 args.level,
                 args.axis,
                 args.scope,

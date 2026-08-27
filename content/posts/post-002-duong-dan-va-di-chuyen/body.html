@@ -1,0 +1,195 @@
+<section class="objective"><h2>Mục tiêu</h2>
+<p>Sau bài này bạn nói được chính xác mình đang đứng ở đâu, đi tới chỗ khác mà không phá thứ gì, và — phần đáng giá nhất — giải thích được vì sao <code>cd ..</code> và <code>ls ..</code> chạy trong cùng một thư mục, cùng một giây, lại có thể trỏ vào hai thư mục khác nhau.</p>
+<p>Đó không phải lỗi của shell. Đó là hai định nghĩa khác nhau của cùng một dấu hai chấm, và cả hai đều đúng. Không biết điều này thì sớm muộn bạn cũng gõ một lệnh xoá tưởng là ở chỗ A trong khi nó chạy ở chỗ B.</p>
+<p>Bài không cài gì, không sửa gì ngoài một thư mục thí nghiệm trong <code>/tmp</code> mà bước cuối sẽ xoá. Toàn bộ chạy bằng tài khoản thường.</p>
+</section>
+
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2>
+<ul>
+<li>Một shell trên Ubuntu, Xubuntu, Debian, Fedora hoặc FreeBSD — tại chỗ hoặc qua SSH.</li>
+<li>Tài khoản người dùng thường. Không bước nào cần quyền quản trị.</li>
+<li>Bài #001, để biết mình đang đứng trên hệ nào. Riêng bài này thì bốn distro Linux kể trên hành xử giống hệt nhau; chỗ rẽ nhánh nằm ở FreeBSD và ở bước 6.</li>
+</ul>
+</section>
+
+<section><h2>Các bước thực hiện</h2>
+<ol class="steps">
+
+<li>
+<p><strong>Dựng một sân thí nghiệm.</strong> Mọi kết quả in ra ở bài này sẽ khớp từng ký tự với máy bạn, vì đường dẫn không phụ thuộc tên người dùng.</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">mkdir -p /tmp/lab/du-an/v2
+cd /tmp/lab
+ln -s du-an/v2 hien-tai
+echo 'TÔI Ở /tmp/lab' &gt; /tmp/lab/dau-moc.txt
+echo 'TÔI Ở /tmp/lab/du-an' &gt; /tmp/lab/du-an/dau-moc.txt</code></pre>
+<p>Cấu trúc vừa dựng: một thư mục <code>du-an</code> chứa <code>v2</code>, và một liên kết mềm <code>hien-tai</code> trỏ tới <code>du-an/v2</code>. Hai file đánh dấu để lát nữa biết mình thực sự đang đọc file nào.</p>
+</li>
+
+<li>
+<p><strong>Hỏi vì sao <code>cd</code> không phải là một chương trình.</strong> Câu trả lời nói cho bạn biết một điều căn bản về cách tiến trình hoạt động.</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">type cd
+type -a pwd</code></pre>
+<p>Thư mục hiện hành là thuộc tính <em>của một tiến trình</em>, và không tiến trình nào đổi được thuộc tính đó của tiến trình cha. Nếu <code>cd</code> là một chương trình, shell sẽ sinh ra một tiến trình con, tiến trình con đổi thư mục của chính nó, rồi chết — còn shell vẫn đứng nguyên chỗ cũ. Vì thế <code>cd</code> <strong>bắt buộc</strong> phải là lệnh dựng sẵn của shell. Nó không thể là gì khác.</p>
+<p><code>pwd</code> thì vừa là lệnh dựng sẵn vừa là một chương trình thật trong <code>/bin</code>. Hai bản đó không cho cùng một kết quả, và bước 4 sẽ cho bạn thấy.</p>
+</li>
+
+<li>
+<p><strong>Nhìn thấy dấu chấm và hai dấu chấm là mục thật trên đĩa.</strong> Chúng không phải cú pháp của shell, không phải phép thuật. Chúng là hai mục có thật trong mọi thư mục, và có số inode để chứng minh.</p>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">cd /tmp/lab/du-an
+stat -c '%i %n' . ..
+cd /tmp/lab
+stat -c '%i %n' du-an .
+stat -c '%i %n' / /..</code></pre>
+<p>Đọc kết quả theo cặp: inode của <code>.</code> khi đứng trong <code>du-an</code> đúng bằng inode của <code>du-an</code> khi nhìn từ thư mục cha. Còn inode của <code>..</code> trong <code>du-an</code> thì bằng inode của <code>.</code> ở <code>/tmp/lab</code>. Đó là cùng một thư mục, gọi bằng hai cái tên.</p>
+<p>Cặp cuối là trường hợp đặc biệt đáng nhớ: <code>/</code> và <code>/..</code> có cùng inode. Thư mục gốc là cha của chính nó, nên <code>cd ..</code> gõ mãi cũng không rơi ra khỏi hệ thống tập tin.</p>
+</li>
+
+<li>
+<p><strong>Tách đường dẫn tuyệt đối khỏi đường dẫn tương đối.</strong> Khác biệt duy nhất giữa chúng là chỗ bắt đầu giải nghĩa: đường dẫn mở đầu bằng <code>/</code> thì kernel bắt đầu từ thư mục gốc; mọi đường dẫn khác thì bắt đầu từ thư mục hiện hành của tiến trình đang gọi.</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">cd /tmp/lab/hien-tai
+pwd
+pwd -P
+/bin/pwd</code></pre>
+<p>Ba dòng kết quả, hai giá trị khác nhau. <code>pwd</code> dựng sẵn của shell trả về đường bạn <em>đã đi</em>; <code>pwd -P</code> và chương trình <code>/bin/pwd</code> trả về đường thật sau khi giải hết liên kết mềm.</p>
+<p>Hai tên gọi cho hai thứ đó: <strong>cwd logic</strong> là chuỗi mà shell tự ghi nhớ trong biến <code>PWD</code> mỗi lần bạn <code>cd</code>; <strong>cwd vật lý</strong> là thư mục mà kernel thực sự đang giữ cho tiến trình. Bình thường chúng trùng nhau. Có liên kết mềm trên đường đi thì chúng tách ra.</p>
+</li>
+
+<li>
+<p><strong>Nhìn thẳng vào chỗ hai định nghĩa đó đá nhau.</strong> Đây là phần đáng nhớ nhất của bài. Vẫn đứng nguyên trong <code>/tmp/lab/hien-tai</code>, không đi đâu cả.</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">cd /tmp/lab/hien-tai
+cat ../dau-moc.txt
+( cd .. &amp;&amp; pwd )</code></pre>
+<p>Lệnh <code>cat</code> đọc được file đánh dấu của <code>/tmp/lab/du-an</code>. Lệnh <code>cd ..</code> thì đưa bạn về <code>/tmp/lab</code>. Cùng một chuỗi <code>..</code>, hai đích khác nhau, cách nhau đúng một dòng.</p>
+<p>Lý do: <code>cd</code> là lệnh dựng sẵn nên nó xử lý <code>..</code> bằng thao tác <em>trên chuỗi</em> — cắt bỏ thành phần cuối của <code>PWD</code>, tức là bỏ <code>hien-tai</code> khỏi <code>/tmp/lab/hien-tai</code>. Còn <code>cat</code> là một chương trình: nó đưa nguyên chuỗi <code>../dau-moc.txt</code> cho kernel, và kernel không biết gì về <code>PWD</code>. Kernel bắt đầu từ cwd vật lý là <code>/tmp/lab/du-an/v2</code>, đi lên một cấp, ra <code>/tmp/lab/du-an</code>.</p>
+<p><strong>Quy tắc rút ra:</strong> lệnh dựng sẵn của shell đi theo đường bạn đã đi; mọi chương trình khác đi theo đường thật. Cứ có liên kết mềm trong đường dẫn là hai lối đó rẽ nhau.</p>
+</li>
+
+<li>
+<p><strong>Chọn phe, và ép nó rõ ràng.</strong> Khi cần chắc chắn mình đang nói về thư mục thật, có hai công cụ.</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">cd /tmp/lab/hien-tai
+( cd -P .. &amp;&amp; pwd )
+cd /tmp/lab
+realpath hien-tai
+readlink hien-tai</code></pre>
+<p><code>cd -P</code> bảo shell bỏ lối logic và đi theo đường vật lý — kết quả trùng với nơi <code>cat ..</code> đã tới ở bước 5. Đặt <code>set -P</code> đầu một script là bật hành vi đó cho toàn bộ script.</p>
+<p><code>realpath</code> trả về đường tuyệt đối đã giải hết liên kết. Đừng nhầm với <code>readlink</code> trần: <code>readlink</code> chỉ đọc <em>nội dung</em> của liên kết, ở đây là chuỗi tương đối <code>du-an/v2</code> — bản thân nó không dùng làm đường dẫn được.</p>
+</li>
+
+<li>
+<p><strong>Trên FreeBSD, cùng một sự chia đôi ấy.</strong> Đây không phải đặc tính của Linux mà là của POSIX, nên bẫy ở bước 5 đi theo bạn sang cả FreeBSD. Điều khác là công cụ nào đáng tin để chuẩn hoá đường dẫn.</p>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">cd /tmp/lab/hien-tai
+pwd
+pwd -P
+realpath /tmp/lab/hien-tai</code></pre>
+<p>Hai lệnh đầu cho đúng hai giá trị như trên Linux. Còn <code>realpath</code> là lệnh nên dùng khi script phải chạy trên cả hai họ: nó có sẵn trong hệ nền của cả Linux lẫn FreeBSD, và POSIX chuẩn hoá chính nó.</p>
+<p>Thứ <strong>không</strong> nên bám là <code>readlink -f</code>. Cờ <code>-f</code> không nằm trong POSIX, và bản của FreeBSD với bản của GNU coreutils không hành xử giống nhau ở các trường hợp rìa — điển hình là khi thành phần cuối của đường dẫn chưa tồn tại. Script viết trên Ubuntu rồi mang sang FreeBSD sẽ hỏng đúng ở chỗ đó, và hỏng im lặng.</p>
+</li>
+
+<li>
+<p><strong>Nhớ rằng dấu ngã không phải là một đường dẫn.</strong> Nó là phép khai triển của shell, xảy ra <em>trước</em> khi lệnh được gọi. Cái gì chặn phép khai triển thì cũng giết luôn dấu ngã.</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">echo ~
+echo "~"
+echo '~'</code></pre>
+<p>Dòng đầu in ra thư mục nhà của bạn. Hai dòng sau in ra đúng một ký tự ngã, vì dấu nháy chặn khai triển. Cùng lý do đó, <code>~</code> viết trong file cấu hình, trong crontab, hay trong tham số mà một chương trình tự đọc lấy sẽ ở nguyên dạng ký tự ngã — không chương trình nào có nghĩa vụ hiểu nó.</p>
+</li>
+
+<li>
+<p><strong>Dọn sân.</strong> Thư mục thí nghiệm nằm trong <code>/tmp</code> nên nó sẽ tự biến mất sau lần khởi động lại, nhưng xoá tay thì gọn hơn.</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">cd /
+rm -rf /tmp/lab</code></pre>
+<p>Chú ý dòng <code>cd /</code> đứng trước. Xoá đúng thư mục mà mình đang đứng trong đó là chuyện làm được trên Unix, và cái nó để lại — một tiến trình có cwd trỏ vào thư mục không còn tên — là nguồn của những thông báo lỗi khó hiểu nhất mà người mới gặp phải.</p>
+</li>
+
+</ol>
+</section>
+
+<section><h2>Kiểm chứng</h2>
+<p><strong>Expected Output</strong> — bước 2, trên Ubuntu 24.04:</p>
+<pre><code class="language-text">cd is a shell builtin
+pwd is a shell builtin
+pwd is /usr/bin/pwd
+pwd is /bin/pwd</code></pre>
+<p>Bước 3. Bốn số đầu là inode nên máy bạn sẽ ra số khác — thứ phải khớp là <em>quan hệ</em> giữa chúng: dòng 1 bằng dòng 3, dòng 2 bằng dòng 4, và hai dòng cuối bằng nhau:</p>
+<pre><code class="language-text">1884298 .
+1884291 ..
+1884298 du-an
+1884291 .
+2 /
+2 /..</code></pre>
+<p>Inode 2 cho thư mục gốc là giá trị quen thuộc trên các hệ thống tập tin họ ext — nơi khác con số có thể khác, nhưng hai dòng vẫn phải bằng nhau.</p>
+<p>Bước 4 — đây là chỗ hai giá trị tách ra:</p>
+<pre><code class="language-text">/tmp/lab/hien-tai
+/tmp/lab/du-an/v2
+/tmp/lab/du-an/v2</code></pre>
+<p>Bước 5, phần đáng giá nhất. Hai dòng này là hai lệnh liên tiếp trong cùng một thư mục:</p>
+<pre><code class="language-text">TÔI Ở /tmp/lab/du-an
+/tmp/lab</code></pre>
+<p>Bước 6:</p>
+<pre><code class="language-text">/tmp/lab/du-an
+/tmp/lab/du-an/v2
+du-an/v2</code></pre>
+<p>Dòng cuối là điểm dễ vấp: <code>readlink</code> trả về <code>du-an/v2</code>, một chuỗi tương đối, chỉ có nghĩa khi đứng ở <code>/tmp/lab</code>. Đưa chuỗi đó cho một lệnh chạy ở thư mục khác là sai địa chỉ.</p>
+<p>Bước 8:</p>
+<pre><code class="language-text">/home/ban
+~
+~</code></pre>
+<p>Dòng đầu là thư mục nhà của bạn nên nó khác nhau ở mỗi máy; hai dòng sau thì giống hệt ở mọi máy.</p>
+<p>Bảng tóm tắt để quay lại tra — cột bên phải là thứ quyết định trong mọi tình huống thật:</p>
+<table>
+<thead><tr><th>Thứ bạn gõ</th><th>Ai giải nghĩa</th><th>Dùng cwd nào</th></tr></thead>
+<tbody>
+<tr><td><code>cd ..</code></td><td>lệnh dựng sẵn của shell</td><td>logic (chuỗi <code>PWD</code>)</td></tr>
+<tr><td><code>cd -P ..</code></td><td>lệnh dựng sẵn của shell</td><td>vật lý</td></tr>
+<tr><td><code>pwd</code></td><td>lệnh dựng sẵn của shell</td><td>logic</td></tr>
+<tr><td><code>/bin/pwd</code></td><td>chương trình</td><td>vật lý</td></tr>
+<tr><td><code>ls ..</code>, <code>rm ../x</code>, <code>cat ../y</code></td><td>kernel</td><td>vật lý</td></tr>
+<tr><td><code>realpath</code></td><td>chương trình</td><td>vật lý</td></tr>
+</tbody>
+</table>
+</section>
+
+<section><h2>Lưu ý &amp; Khắc phục lỗi</h2>
+
+<p><strong>Tai nạn kinh điển: <code>cd ..</code> rồi mới xoá.</strong> Bạn đứng trong một thư mục tới bằng liên kết mềm, gõ <code>cd ..</code>, nhìn thấy <code>pwd</code> in ra thư mục cha mà bạn mong đợi, rồi gõ <code>rm -rf ten-thu-muc</code>. Lần này thì đúng. Nhưng nếu bạn bỏ bước <code>cd</code> và gõ thẳng <code>rm -rf ../ten-thu-muc</code> thì lệnh chạy ở một thư mục khác hẳn. Cách phòng duy nhất đáng tin: trước mọi lệnh xoá đệ quy có <code>..</code> trong đường dẫn, chạy <code>realpath ../ten-thu-muc</code> và đọc kết quả.</p>
+
+<p><strong><code>pwd</code> in ra thư mục không còn tồn tại.</strong> Có ai đó đổi tên hoặc xoá thư mục trong khi shell của bạn đang đứng trong đó. Biến <code>PWD</code> vẫn giữ chuỗi cũ vì nó chỉ là một chuỗi. Gõ <code>/bin/pwd</code> để hỏi kernel; nếu nó báo lỗi thì cwd của bạn thật sự đã mất tên, và cách thoát là <code>cd</code> tới một đường dẫn tuyệt đối bất kỳ.</p>
+
+<p><strong>Biến <code>PWD</code> có thể bị đặt sai.</strong> Nó là biến môi trường thường, ai cũng gán được, và shell tin nó khi khởi động. Đó là lý do không nên xây script quan trọng lên <code>$PWD</code>. Cần đường dẫn thật thì gọi <code>pwd -P</code> hoặc <code>realpath</code>.</p>
+
+<p><strong>Dấu <code>/</code> ở cuối tên một liên kết mềm đổi hẳn ý nghĩa.</strong> <code>ls -ld hien-tai</code> mô tả bản thân liên kết; <code>ls -ld hien-tai/</code> mô tả thư mục mà nó trỏ tới. Khác biệt này quan trọng nhất với <code>rsync</code> và <code>cp -r</code>, nơi một dấu gạch chéo thừa hoặc thiếu đổi cả kết quả sao chép.</p>
+
+<p><strong>Tập tin có tên bắt đầu bằng dấu gạch ngang.</strong> Với một file tên <code>-rf</code>, lệnh <code>cat -rf</code> báo <code>invalid option</code> vì lệnh tưởng đó là cờ. Cách chữa là biến nó thành đường dẫn tương đối tường minh: <code>cat ./-rf</code>. Dấu <code>./</code> ở đây không thừa — nó là thứ duy nhất phân biệt một tên file với một tuỳ chọn dòng lệnh.</p>
+
+<p><strong><code>~</code> không nở ra bên trong dấu nháy.</strong> Viết <code>cp file "~/backup/"</code> sẽ tạo ra một thư mục tên đúng bằng dấu ngã trong thư mục hiện hành, chứ không đụng gì tới thư mục nhà. Đây cũng là lý do <code>sudo command ~/x</code> không phải lúc nào cũng như bạn nghĩ: dấu ngã nở ra <em>trước</em>, theo thư mục nhà của người đang gõ, chứ không phải của <code>root</code>.</p>
+
+<p><strong>Bốn distro Linux hành xử như nhau, khác biệt nằm ở shell.</strong> Ubuntu, Xubuntu, Debian và Fedora đều dùng chung kernel và chung coreutils, nên mọi thứ ở bài này giống hệt nhau trên cả bốn. Cái thay đổi kết quả là <em>shell</em> chứ không phải distro: bản dựng sẵn <code>cd</code> của <code>bash</code>, của <code>dash</code> (là <code>/bin/sh</code> trên Debian và Ubuntu) và của <code>tcsh</code> mỗi bản một ít khác biệt ở cờ. Còn phần logic đối vật lý thì cả ba đều theo POSIX.</p>
+
+</section>
+
+<section class="exercise"><h2>Bài tập tự luyện</h2>
+<ol>
+<li>Dựng lại sân thí nghiệm ở bước 1, đứng vào <code>/tmp/lab/hien-tai</code>, rồi tìm một lệnh <em>duy nhất</em> in ra cả hai đường dẫn logic và vật lý trên cùng một dòng. Không dùng <code>realpath</code>.</li>
+<li>Giải thích vì sao <code>cd /tmp/lab/hien-tai/..</code> và <code>cd /tmp/lab/hien-tai; cd ..</code> đưa bạn tới hai chỗ khác nhau, dù nhìn thì tưởng là cùng một việc. Gợi ý: hỏi xem thành phần <code>..</code> được cắt bỏ ở bước nào.</li>
+<li>Viết một hàm shell nhận vào một đường dẫn bất kỳ và in ra đường tuyệt đối đã giải hết liên kết, chạy được cả trên Ubuntu lẫn FreeBSD. Không dùng <code>readlink -f</code>, và giải thích trong một câu vì sao ràng buộc đó có lý.</li>
+<li>Tạo một file tên <code>--help</code> trong thư mục trống, rồi tìm ít nhất hai cách khác nhau để xoá nó. Cách nào trong số đó vẫn đúng nếu tên file là <code>-</code> đơn độc?</li>
+<li>Trên máy bạn, tìm một liên kết mềm có thật trong <code>/usr</code> hoặc <code>/etc</code> trỏ tới một thư mục, rồi lặp lại thí nghiệm ở bước 5 với nó. Ghi lại hai đường dẫn nhận được, và mô tả một lệnh mà sự lệch đó sẽ làm hỏng.</li>
+</ol>
+</section>
