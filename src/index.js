@@ -22,6 +22,10 @@ function respond(body, type, status = 200) {
   });
 }
 
+function redirect(location) {
+  return new Response(null, { status: 301, headers: { location, "cache-control": CACHE } });
+}
+
 export function handle(request) {
   const { pathname } = new URL(request.url);
 
@@ -39,6 +43,17 @@ export function handle(request) {
       ? "User-agent: *\nDisallow: /\n"
       : `User-agent: *\nAllow: /\n\nSitemap: ${new URL(site.sitemap_path, site.url)}\n`;
     return respond(body, "text/plain; charset=utf-8");
+  }
+
+  if (pathname.startsWith("/trang/")) {
+    const raw = pathname.slice("/trang/".length);
+    // Trang 1 đã sống ở gốc site. Trả nội dung ở cả `/trang/1` là tự tạo cho
+    // mình một bản trùng của trang chủ, nên chuyển hướng hẳn về gốc.
+    if (raw === "1") return redirect("/");
+    // Chỉ số nguyên dương không có số 0 đứng đầu: `/trang/007` và `/trang/7`
+    // mà cùng ra một nội dung cũng là hai URL trùng nhau.
+    const html = /^[1-9][0-9]*$/.test(raw) ? renderHome(Number(raw)) : null;
+    if (html) return respond(html, HTML);
   }
 
   if (pathname.startsWith("/truc/")) {
