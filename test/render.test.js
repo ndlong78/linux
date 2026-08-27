@@ -254,17 +254,3 @@ describe("domain đọc từ site.json", () => {
   });
 });
 
-describe("chạy song song với linux-daily", () => {
-  test("noindex bật thì mọi trang HTML mang thẻ robots", async () => {
-    expect(site.noindex).toBe(true);
-    for (const path of ["/", POST_1]) {
-      expect(await text(path)).toContain('content="noindex, nofollow"');
-    }
-  });
-
-  test("robots.txt chặn toàn bộ khi còn noindex", async () => {
-    const body = await text("/robots.txt");
-    expect(body).toContain("Disallow: /");
-    expect(body).not.toContain("Allow: /");
-  });
-});

@@ -5,5 +5,5 @@
   "url": "https://nix.no.id.vn/",
   "feed_path": "feed.xml",
   "sitemap_path": "sitemap.xml",
-  "noindex": true
+  "noindex": false
 }
