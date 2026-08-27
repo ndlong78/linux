@@ -159,10 +159,13 @@ coreutils, nên mọi bài dán output của `cat`/`ls`/`head` phải nói rõ �
 nào; và APT 3.1 có `apt history-undo`, tức bài về cài/gỡ gói giờ có lệnh hoàn tác
 chính chủ để dạy.
 
-Trường `verified` trong `platforms.json` ghi lần cuối có người **đọc được** tài
-liệu chính chủ của dòng đó. `null` nghĩa là số phiên bản mới chỉ là chủ ý, chưa
-ai đối chiếu — hiện là Debian 13, Fedora 44 và FreeBSD 15, vì hai host tài liệu
-của chúng bị egress proxy chặn ở môi trường soạn bài.
+`platforms.json` phân biệt hai mức xác nhận. `verified_via: read` nghĩa là đã mở
+trang tài liệu chính chủ đọc trực tiếp; `verified_via: search` nghĩa là rút từ
+kết quả tìm kiếm web, với URL nguồn ở trường `source`. Khác biệt này có thật:
+`npm run links` kiểm được URL còn sống, không kiểm được nội dung.
+
+Hiện chỉ Ubuntu ở mức `read` — `docs.freebsd.org`, `docs.fedoraproject.org` và
+`www.debian.org` đều bị egress proxy của môi trường soạn bài chặn ở mức host.
 
 Cổng nội dung kiểm một điều duy nhất về trường này: `tested_on` phải nhắc tới ít
 nhất một hệ có trong ma trận. Đủ để bắt lỗi gõ sai (`Ubunut 26.04`) và bắt trường

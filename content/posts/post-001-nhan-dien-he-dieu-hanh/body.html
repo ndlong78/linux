@@ -79,10 +79,10 @@ ID_LIKE=debian</code></pre>
 ubuntu 24.04</code></pre>
 <p>Chuỗi phiên bản kernel của bạn gần như chắc chắn khác — phần đuôi là do bản dựng kernel quyết định. Ubuntu 24.04 cài theo cách thông thường cho ra dạng <code>6.8.0-51-generic</code>, còn Ubuntu 26.04 LTS đi với kernel dòng <code>7.0</code>; máy dùng để soạn bài này chạy một kernel dựng riêng. Cái cần khớp là ba phần: tên kernel, số phiên bản, kiến trúc.</p>
 <p>Trên FreeBSD, cùng hai bước ấy cho ra dạng khác hẳn — <code>uname -s</code> đổi giá trị, và <code>freebsd-version</code> mới là nơi có phiên bản hệ điều hành:</p>
-<pre class="bsd"><code class="language-text">FreeBSD 15.0-RELEASE amd64
-15.0-RELEASE
-15.0-RELEASE
-15.0-RELEASE</code></pre>
+<pre class="bsd"><code class="language-text">FreeBSD 15.1-RELEASE amd64
+15.1-RELEASE
+15.1-RELEASE
+15.1-RELEASE</code></pre>
 <p>Đối chiếu kết quả của bạn với bảng sau — đây là bảng bạn sẽ còn quay lại suốt series:</p>
 <table>
 <thead><tr><th>Hệ điều hành</th><th><code>ID</code></th><th><code>ID_LIKE</code></th><th>Trình quản lý gói</th></tr></thead>
@@ -109,7 +109,7 @@ ubuntu 24.04</code></pre>
 
 <p><strong>Đừng xây script lên <code>lsb_release</code>.</strong> Lệnh này thuộc một gói riêng, không được cài sẵn trên Fedora và vắng mặt ở nhiều ảnh Ubuntu, Debian tối giản. Nó cũng chậm hơn hẳn vì phải khởi động một trình thông dịch. File <code>os-release</code> thì luôn có và chỉ là một lần đọc file.</p>
 
-<p><strong>FreeBSD: hai con số lệch nhau sau khi cập nhật.</strong> <code>uname -r</code> báo kernel <em>đang chạy</em>, còn userland đã có thể mới hơn nếu bạn vừa cập nhật mà chưa khởi động lại. Đây không phải lỗi hiển thị — hai thành phần thực sự đang ở hai phiên bản. Dùng <code>freebsd-version -kru</code> để thấy đủ ba số trước khi kết luận máy đang ở phiên bản nào.</p>
+<p><strong>FreeBSD: hai con số lệch nhau sau khi cập nhật.</strong> <code>uname -r</code> báo kernel <em>đang chạy</em>, còn userland đã có thể mới hơn nếu bạn vừa cập nhật mà chưa khởi động lại. Đường cập nhật tuỳ cách cài: hệ cài theo lối cũ dùng <code>freebsd-update</code>, còn hệ cài theo pkgbase — mặc định cho ảnh VM và ảnh cloud từ FreeBSD 15 — cập nhật hệ nền bằng <code>pkg</code>. Đây không phải lỗi hiển thị — hai thành phần thực sự đang ở hai phiên bản. Dùng <code>freebsd-version -kru</code> để thấy đủ ba số trước khi kết luận máy đang ở phiên bản nào.</p>
 
 </section>
 
