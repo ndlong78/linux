@@ -1,0 +1,45 @@
+{
+  "issue": 2,
+  "date": "2026-08-26",
+  "level": 1,
+  "axis": "Tập tin",
+  "scope": "cross-platform",
+  "slug": "post-002-duong-dan-va-di-chuyen",
+  "eyebrow": "Vận hành · Tập tin",
+  "title": "Đường dẫn tuyệt đối, tương đối và cách đi lại",
+  "lede": "Trong cùng một thư mục, cùng một khoảnh khắc, hai lệnh cùng viết hai dấu chấm có thể trỏ vào hai nơi khác nhau. Đó không phải lỗi, và nó là thứ đứng sau một loạt tai nạn xoá nhầm thư mục.",
+  "description": "Đường dẫn tuyệt đối và tương đối, dấu chấm và hai chấm là mục thật trên đĩa, và vì sao cwd của shell khác cwd mà kernel dùng khi có symlink.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu 24.04.4 LTS (x86_64)"
+  ],
+  "last_verified": "2026-08-26",
+  "changes_system": false,
+  "sources": [
+    {
+      "title": "man7.org — path_resolution(7)",
+      "url": "https://man7.org/linux/man-pages/man7/path_resolution.7.html",
+      "kind": "official"
+    },
+    {
+      "title": "man7.org — symlink(7)",
+      "url": "https://man7.org/linux/man-pages/man7/symlink.7.html",
+      "kind": "official"
+    },
+    {
+      "title": "POSIX.1-2024 — cd",
+      "url": "https://pubs.opengroup.org/onlinepubs/9799919799/utilities/cd.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD manual — pwd(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=pwd&sektion=1",
+      "kind": "official"
+    },
+    {
+      "title": "GNU coreutils — realpath invocation",
+      "url": "https://www.gnu.org/software/coreutils/manual/html_node/realpath-invocation.html",
+      "kind": "upstream"
+    }
+  ]
+}
