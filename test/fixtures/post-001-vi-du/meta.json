@@ -1,9 +1,10 @@
 {
   "issue": 1,
   "date": "2026-06-01",
-  "axis": "Networking",
+  "level": 1,
+  "axis": "Mạng cơ bản",
   "slug": "post-001-vi-du",
-  "eyebrow": "Networking · Ví dụ",
+  "eyebrow": "Vận hành · Ví dụ",
   "title": "Bài ví dụ dùng cho test cổng nội dung",
   "lede": "Fragment tối thiểu nhưng hợp lệ, đủ để mọi quy tắc của validator có cái để bám vào.",
   "description": "Bài fixture cho bộ test: đủ heading bắt buộc, có khối FreeBSD riêng và nhắc đủ các distro.",

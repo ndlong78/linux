@@ -69,7 +69,9 @@ describe("trang bài", () => {
     expect(response.status).toBe(200);
     const html = await response.text();
     expect(html).toContain("<h1>Bài ví dụ dùng cho test cổng nội dung</h1>");
-    expect(html).toContain('<p class="eyebrow">Networking · Ví dụ</p>');
+    expect(html).toContain('<p class="eyebrow">Vận hành · Ví dụ</p>');
+    // Cấp trong lộ trình phải đọc được ngay trên đầu bài.
+    expect(html).toContain('<span class="level"');
     expect(html).toContain('<meta property="og:type" content="article">');
     expect(html).toContain(
       `<link rel="canonical" href="${site.url}posts/post-001-vi-du">`,

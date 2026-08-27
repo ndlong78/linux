@@ -21,11 +21,11 @@ const text = async (path) => (await get(path)).text();
 
 describe("slugify", () => {
   test.each([
-    ["Nền tảng", "nen-tang"],
-    ["Networking", "networking"],
-    ["Tiến trình & dịch vụ", "tien-trinh-dich-vu"],
-    ["Quan sát & sự cố", "quan-sat-su-co"],
-    ["Lưu trữ", "luu-tru"],
+    ["Mạng cơ bản", "mang-co-ban"],
+    ["Gói phần mềm", "goi-phan-mem"],
+    ["Quy mô nghìn máy", "quy-mo-nghin-may"],
+    ["Hạ tầng dạng mã", "ha-tang-dang-ma"],
+    ["PXE và xưởng ảnh", "pxe-va-xuong-anh"],
   ])("%s → %s", (input, expected) => {
     expect(slugify(input)).toBe(expected);
   });
@@ -51,7 +51,7 @@ describe("trục", () => {
   });
 
   test("trang trục liệt kê đúng bài của trục đó", async () => {
-    const html = await text("/truc/networking");
+    const html = await text("/truc/mang-co-ban");
     expect(html).toContain("Bài ví dụ dùng cho test cổng nội dung");
     expect(html).toContain("Bài ví dụ thứ hai, cùng trục với bài một");
     expect(html).not.toContain("Bài ví dụ chỉ dành cho Linux");
@@ -59,7 +59,7 @@ describe("trục", () => {
 
   test("trang trục xếp cũ nhất trước, ngược với trang chủ", async () => {
     // Trang chủ trả lời "có gì mới"; trang trục trả lời "bắt đầu từ đâu".
-    const axis = await text("/truc/networking");
+    const axis = await text("/truc/mang-co-ban");
     const home = await text("/");
     expect(axis.indexOf("#001")).toBeLessThan(axis.indexOf("#002"));
     expect(home.indexOf("#002")).toBeLessThan(home.indexOf("#001"));
@@ -71,13 +71,13 @@ describe("trục", () => {
 
   test("chip trục trên trang bài dẫn tới trang trục", async () => {
     const html = await text("/posts/post-001-vi-du");
-    expect(html).toContain('href="/truc/networking"');
+    expect(html).toContain('href="/truc/mang-co-ban"');
   });
 
   test("trang chủ có lối vào theo trục", async () => {
     const html = await text("/");
     expect(html).toContain('class="axis-nav"');
-    expect(html).toContain('href="/truc/nen-tang"');
+    expect(html).toContain('href="/truc/systemd"');
   });
 
   test("sitemap có trang trục", async () => {
@@ -88,7 +88,7 @@ describe("trục", () => {
   });
 
   test("postsInAxis chỉ nhận slug, không nhận tên có dấu", () => {
-    expect(postsInAxis("networking")).toHaveLength(2);
-    expect(postsInAxis("Networking")).toHaveLength(0);
+    expect(postsInAxis("mang-co-ban")).toHaveLength(2);
+    expect(postsInAxis("Mạng cơ bản")).toHaveLength(0);
   });
 });

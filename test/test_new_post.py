@@ -22,7 +22,10 @@ from content import load_posts  # noqa: E402
 
 def make(tmp_path: Path, *args: str) -> Path:
     drafts = tmp_path / "drafts"
-    assert new_post.main(["post-042-thu-nghiem", "--issue", "42", "--drafts", str(drafts), *args]) == 0
+    base = ["post-042-thu-nghiem", "--issue", "42", "--drafts", str(drafts)]
+    if "--axis" not in args:
+        base += ["--level", "1", "--axis", "Tập tin"]
+    assert new_post.main([*base, *args]) == 0
     return drafts
 
 
@@ -119,3 +122,30 @@ def test_dat_duoc_ngay_len(tmp_path: Path):
 def test_ngay_sai_dinh_dang_bi_tu_choi(tmp_path: Path):
     assert new_post.main(["post-042-x", "--date", "31/01/2099", "--drafts", str(tmp_path)]) == 1
     assert not (tmp_path / "post-042-x").exists()
+
+
+# --- lộ trình 4 cấp ---
+
+def test_thieu_axis_thi_tu_choi_va_liet_ke_nhanh_hop_le(tmp_path: Path, capsys):
+    """Người viết không phải mở curriculum.json mới biết cấp đó có nhánh nào."""
+    assert new_post.main(["post-042-x", "--level", "2", "--drafts", str(tmp_path)]) == 1
+    err = capsys.readouterr().err
+    assert "Lưu trữ" in err and "systemd" in err
+
+
+def test_axis_khong_thuoc_cap_thi_tu_choi(tmp_path: Path, capsys):
+    """Nhánh có thật nhưng sai cấp cũng là sai — lộ trình mới là thứ quyết định."""
+    code = new_post.main(
+        ["post-042-x", "--level", "2", "--axis", "Tập tin", "--drafts", str(tmp_path)]
+    )
+    assert code == 1
+    assert "không phải nhánh của cấp 2" in capsys.readouterr().err
+    assert not (tmp_path / "post-042-x").exists()
+
+
+def test_eyebrow_sinh_tu_cap_va_nhanh(tmp_path: Path):
+    drafts = make(tmp_path, "--level", "3", "--axis", "Hiệu năng")
+    meta = json.loads((drafts / "post-042-thu-nghiem" / "meta.json").read_text(encoding="utf-8"))
+    assert meta["level"] == 3
+    assert meta["axis"] == "Hiệu năng"
+    assert meta["eyebrow"] == "Quản trị cấp cao · Hiệu năng"

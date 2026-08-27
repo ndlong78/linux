@@ -1,0 +1,64 @@
+{
+  "_comment": "Lộ trình 4 cấp của series. Đây là nguồn sự thật cho hai trường metadata: `level` (1-4) và `axis` (tên nhánh trong cấp đó). Cổng nội dung đọc file này, nên một `axis` gõ sai hoặc không thuộc cấp đã khai sẽ bị chặn.",
+  "updated": "2026-08-26",
+  "levels": [
+    {
+      "level": 1,
+      "name": "Linux Operator",
+      "vi": "Vận hành",
+      "goal": "Làm được việc hằng ngày trên một máy: đọc, sửa, cài, nối mạng, bật tắt dịch vụ.",
+      "tracks": [
+        { "id": "file",          "axis": "Tập tin" },
+        { "id": "user",          "axis": "Người dùng" },
+        { "id": "package",       "axis": "Gói phần mềm" },
+        { "id": "basic-network", "axis": "Mạng cơ bản" },
+        { "id": "service",       "axis": "Dịch vụ" }
+      ]
+    },
+    {
+      "level": 2,
+      "name": "Linux Administrator",
+      "vi": "Quản trị",
+      "goal": "Chịu trách nhiệm cho một hệ: lưu trữ, unit, mạng, bảo mật, sao lưu, và tự động hoá việc lặp lại.",
+      "tracks": [
+        { "id": "storage",    "axis": "Lưu trữ" },
+        { "id": "systemd",    "axis": "systemd" },
+        { "id": "networking", "axis": "Mạng" },
+        { "id": "security",   "axis": "Bảo mật" },
+        { "id": "backup",     "axis": "Sao lưu" },
+        { "id": "scripting",  "axis": "Scripting" }
+      ]
+    },
+    {
+      "level": 3,
+      "name": "Senior Linux SysAdmin",
+      "vi": "Quản trị cấp cao",
+      "goal": "Giữ hệ chạy dưới áp lực: đo, chẩn, gia cố, và quản nhiều máy cùng lúc.",
+      "tracks": [
+        { "id": "performance",     "axis": "Hiệu năng" },
+        { "id": "troubleshooting", "axis": "Chẩn đoán sự cố" },
+        { "id": "automation",      "axis": "Tự động hoá" },
+        { "id": "ha",              "axis": "Sẵn sàng cao" },
+        { "id": "monitoring",      "axis": "Giám sát" },
+        { "id": "hardening",       "axis": "Gia cố" },
+        { "id": "fleet",           "axis": "Quản lý đội máy" }
+      ]
+    },
+    {
+      "level": 4,
+      "name": "Linux Platform / Infrastructure Engineer",
+      "vi": "Kỹ sư nền tảng",
+      "goal": "Thiết kế nền tảng cho hàng nghìn máy: kiến trúc, IaC, observability, xưởng ảnh, CI/CD, Kubernetes.",
+      "tracks": [
+        { "id": "architecture",  "axis": "Kiến trúc" },
+        { "id": "config-mgmt",   "axis": "Quản lý cấu hình" },
+        { "id": "iac",           "axis": "Hạ tầng dạng mã" },
+        { "id": "observability", "axis": "Observability" },
+        { "id": "image-factory", "axis": "PXE và xưởng ảnh" },
+        { "id": "cicd",          "axis": "CI/CD" },
+        { "id": "kubernetes",    "axis": "Kubernetes" },
+        { "id": "scale",         "axis": "Quy mô nghìn máy" }
+      ]
+    }
+  ]
+}

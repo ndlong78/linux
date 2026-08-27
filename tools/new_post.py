@@ -18,7 +18,7 @@ from datetime import date
 from pathlib import Path
 
 from content import POSTS_DIR, load_posts
-from validate_content import PLATFORMS
+from validate_content import CURRICULUM, PLATFORMS
 
 ROOT = Path(__file__).resolve().parents[1]
 DRAFTS_DIR = ROOT / "content" / "drafts"
@@ -86,16 +86,23 @@ def next_issue() -> int:
 
 
 def build_meta(
-    slug: str, issue: int, axis: str, scope: str, changes_system: bool, publish_on: date
+    slug: str,
+    issue: int,
+    level: int,
+    axis: str,
+    scope: str,
+    changes_system: bool,
+    publish_on: date,
 ) -> dict:
     meta = {
         "issue": issue,
         # Ngày lên, theo 00:00 giờ Việt Nam. Ngày tương lai là hợp lệ và có
         # nghĩa: bài nằm trong bundle nhưng chưa được trả ra cho tới ngày đó.
         "date": publish_on.isoformat(),
+        "level": level,
         "axis": axis,
         "slug": slug,
-        "eyebrow": f"{axis} · TODO",
+        "eyebrow": f"{CURRICULUM[level]['vi']} · {axis}",
         "title": "TODO: tiêu đề, tối đa 52 ký tự",
         "lede": "TODO: câu dẫn — một hai câu nói vì sao bài này đáng đọc.",
         "description": "TODO: SEO copy riêng, tối đa 160 ký tự và phải khác lede.",
@@ -133,7 +140,10 @@ def build_meta(
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("slug", help="Thư mục bài, dạng post-002-ten-bai")
-    parser.add_argument("--axis", default="Nền tảng", help="Trục series (related-nav nối theo trục)")
+    parser.add_argument(
+        "--level", type=int, default=1, choices=sorted(CURRICULUM), help="Cấp trong lộ trình"
+    )
+    parser.add_argument("--axis", default=None, help="Nhánh trong cấp đó (xem curriculum.json)")
     parser.add_argument("--issue", type=int, default=None, help="Mặc định: số hiệu lớn nhất + 1")
     parser.add_argument(
         "--scope",
@@ -160,6 +170,18 @@ def main(argv=None) -> int:
         print(f"✗ --date phải là YYYY-MM-DD: {args.date!r}", file=sys.stderr)
         return 1
 
+    axes = sorted(CURRICULUM[args.level]["axes"])
+    if args.axis is None:
+        print(f"✗ thiếu --axis. Nhánh của cấp {args.level}: {axes}", file=sys.stderr)
+        return 1
+    if args.axis not in axes:
+        print(
+            f"✗ '{args.axis}' không phải nhánh của cấp {args.level} "
+            f"({CURRICULUM[args.level]['name']}). Hợp lệ: {axes}",
+            file=sys.stderr,
+        )
+        return 1
+
     if not SLUG_RE.match(args.slug):
         print(f"✗ slug phải là chữ thường và gạch nối: {args.slug!r}", file=sys.stderr)
         return 1
@@ -176,6 +198,7 @@ def main(argv=None) -> int:
             build_meta(
                 args.slug,
                 args.issue or next_issue(),
+                args.level,
                 args.axis,
                 args.scope,
                 args.changes_system,

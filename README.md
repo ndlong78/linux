@@ -159,10 +159,13 @@ coreutils, nên mọi bài dán output của `cat`/`ls`/`head` phải nói rõ �
 nào; và APT 3.1 có `apt history-undo`, tức bài về cài/gỡ gói giờ có lệnh hoàn tác
 chính chủ để dạy.
 
-Trường `verified` trong `platforms.json` ghi lần cuối có người **đọc được** tài
-liệu chính chủ của dòng đó. `null` nghĩa là số phiên bản mới chỉ là chủ ý, chưa
-ai đối chiếu — hiện là Debian 13, Fedora 44 và FreeBSD 15, vì hai host tài liệu
-của chúng bị egress proxy chặn ở môi trường soạn bài.
+`platforms.json` phân biệt hai mức xác nhận. `verified_via: read` nghĩa là đã mở
+trang tài liệu chính chủ đọc trực tiếp; `verified_via: search` nghĩa là rút từ
+kết quả tìm kiếm web, với URL nguồn ở trường `source`. Khác biệt này có thật:
+`npm run links` kiểm được URL còn sống, không kiểm được nội dung.
+
+Hiện chỉ Ubuntu ở mức `read` — `docs.freebsd.org`, `docs.fedoraproject.org` và
+`www.debian.org` đều bị egress proxy của môi trường soạn bài chặn ở mức host.
 
 Cổng nội dung kiểm một điều duy nhất về trường này: `tested_on` phải nhắc tới ít
 nhất một hệ có trong ma trận. Đủ để bắt lỗi gõ sai (`Ubunut 26.04`) và bắt trường
@@ -236,9 +239,37 @@ bao giờ trở thành cách lách.
 Và nó hiện lên trang bài, không nằm im trong JSON: người đọc FreeBSD thấy ngay
 dòng "Bài này chỉ áp dụng cho Linux" thay vì đọc hết rồi mới phát hiện.
 
+## Lộ trình 4 cấp
+
+`content/curriculum.json` là nguồn sự thật cho hai trường metadata: `level`
+(1–4) và `axis` (nhánh trong cấp đó). Cổng nội dung đọc file này, nên một bài
+khai sai cặp `level`/`axis` bị chặn ngay — không có chuyện bài rơi ra ngoài lộ
+trình mà vẫn render bình thường.
+
+| Cấp | | Nhánh |
+|---|---|---|
+| 1 | Linux Operator — Vận hành | Tập tin · Người dùng · Gói phần mềm · Mạng cơ bản · Dịch vụ |
+| 2 | Linux Administrator — Quản trị | Lưu trữ · systemd · Mạng · Bảo mật · Sao lưu · Scripting |
+| 3 | Senior Linux SysAdmin | Hiệu năng · Chẩn đoán sự cố · Tự động hoá · Sẵn sàng cao · Giám sát · Gia cố · Quản lý đội máy |
+| 4 | Platform / Infrastructure Engineer | Kiến trúc · Quản lý cấu hình · Hạ tầng dạng mã · Observability · PXE và xưởng ảnh · CI/CD · Kubernetes · Quy mô nghìn máy |
+
+Cấp hiện lên trang: huy hiệu `L2` ở đầu bài và trong danh sách ở trang chủ. Nhánh
+là thứ `/truc/<slug>` gom theo, và cũng là thứ related-nav dùng để nối bài trước
+với bài sau.
+
+`new-post` bắt cả hai:
+
+```bash
+npm run new-post -- post-020-systemd-unit --level 2 --axis "systemd"
+```
+
+Thiếu `--axis` hoặc khai nhánh không thuộc cấp đó thì nó từ chối và in ra danh
+sách nhánh hợp lệ của cấp — không phải mở `curriculum.json` mới biết.
+
 ## Backlog và lịch soạn nháp
 
-`content/backlog.md` giữ danh sách chủ đề theo thứ tự. Một lịch tự động chạy hai
+`content/backlog.md` giữ danh sách chủ đề theo thứ tự — 57 bài, xếp từ cấp 1 lên
+cấp 4, mỗi dòng khai sẵn nhánh, scope và có sửa hệ thống hay không. Một lịch tự động chạy hai
 lần mỗi tuần lấy mục đầu tiên chưa có bài, dựng bản nháp bằng `new-post`, viết
 nội dung, chạy `npm run gate:draft`, rồi mở PR.
 

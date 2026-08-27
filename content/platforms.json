@@ -1,5 +1,5 @@
 {
-  "_comment": "Ma trận phiên bản mà series nhắm tới. Đây là MỤC TIÊU, không phải bằng chứng: nâng phiên bản ở đây không làm bài nào tự nhiên được kiểm lại. Bằng chứng nằm ở `tested_on` của từng bài, và chỉ đổi được bằng cách chạy thật. Trường `verified` ghi lần cuối có người ĐỌC ĐƯỢC tài liệu chính chủ để xác nhận các con số ở dòng đó; null nghĩa là chưa xác nhận.",
+  "_comment": "Ma trận phiên bản mà series nhắm tới. Đây là MỤC TIÊU, không phải bằng chứng: nâng phiên bản ở đây không làm bài nào tự nhiên được kiểm lại. Bằng chứng nằm ở `tested_on` của từng bài, và chỉ đổi được bằng cách chạy thật. `verified` ghi ngày xác nhận số phiên bản, `verified_via` ghi cách xác nhận: `read` là đã mở trang tài liệu đọc trực tiếp, `search` là rút từ kết quả tìm kiếm web (nguồn ở `source`) vì host tài liệu bị egress proxy chặn.",
   "updated": "2026-08-26",
   "targets": [
     {
@@ -13,7 +13,10 @@
       "packages": "apt",
       "kernel": "7.0",
       "docs": "https://documentation.ubuntu.com/release-notes/26.04/",
-      "verified": "2026-08-26"
+      "verified": "2026-08-26",
+      "verified_via": "read",
+      "source": "https://documentation.ubuntu.com/release-notes/26.04/",
+      "systemd": "259.5"
     },
     {
       "name": "Xubuntu",
@@ -26,46 +29,59 @@
       "packages": "apt",
       "kernel": null,
       "docs": "https://xubuntu.org/releasedocs/26.04/release-notes/",
-      "verified": null
+      "verified": null,
+      "verified_via": null,
+      "source": null,
+      "systemd": null
     },
     {
       "name": "Debian",
       "version": "13 (Trixie)",
       "codename": "Trixie",
-      "released": null,
-      "supported_until": null,
+      "released": "2025-08-09",
+      "supported_until": "2030-06",
       "id": "debian",
       "id_like": null,
       "packages": "apt",
-      "kernel": null,
+      "kernel": "6.12 LTS",
       "docs": "https://www.debian.org/releases/trixie/",
-      "verified": null
+      "verified": "2026-08-26",
+      "verified_via": "search",
+      "source": "https://www.debian.org/News/2025/20250809",
+      "systemd": "257"
     },
     {
       "name": "Fedora",
       "version": "44",
       "codename": null,
-      "released": null,
-      "supported_until": null,
+      "released": "2026-04-28",
+      "supported_until": "2027-05",
       "id": "fedora",
       "id_like": null,
-      "packages": "dnf",
-      "kernel": null,
+      "packages": "dnf5",
+      "kernel": "6.19",
       "docs": "https://docs.fedoraproject.org/en-US/fedora-server/",
-      "verified": null
+      "verified": "2026-08-26",
+      "verified_via": "search",
+      "source": "https://fedoramagazine.org/announcing-fedora-linux-44/",
+      "systemd": "259.5",
+      "source_systemd": "https://packages.fedoraproject.org/pkgs/systemd/systemd/"
     },
     {
       "name": "FreeBSD",
-      "version": "15.0-RELEASE",
+      "version": "15.1-RELEASE",
       "codename": null,
-      "released": null,
-      "supported_until": null,
+      "released": "2026-06-16",
+      "supported_until": "2027-03",
       "id": "freebsd",
       "id_like": null,
       "packages": "pkg",
       "kernel": null,
       "docs": "https://docs.freebsd.org/en/books/handbook/",
-      "verified": null
+      "verified": "2026-08-26",
+      "verified_via": "search",
+      "source": "https://www.freebsd.org/releases/15.1R/announce/",
+      "systemd": null
     }
   ]
 }
