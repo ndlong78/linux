@@ -1,0 +1,45 @@
+{
+  "issue": 3,
+  "date": "2026-08-29",
+  "level": 2,
+  "axis": "Lưu trữ",
+  "scope": "cross-platform",
+  "slug": "post-003-o-dia-loi-tao-anh-truoc",
+  "eyebrow": "Quản trị · Lưu trữ",
+  "title": "Ổ đĩa lỗi: tạo ảnh trước, sửa sau",
+  "lede": "Mọi công cụ sửa filesystem đều ghi lên đĩa. Trên một ổ đang hỏng, ghi chính là thứ giết nốt phần còn đọc được. Nên thứ tự — chẩn, tạo ảnh, rồi mới sửa — quan trọng hơn bất kỳ lệnh nào trong bài.",
+  "description": "Chẩn đoán phần cứng bằng SMART và kernel log, tạo ảnh bằng ddrescue, rồi sửa filesystem trên ảnh chứ không trên ổ nguồn — trên Linux và FreeBSD.",
+  "review_status": "draft",
+  "tested_on": [
+    "Ubuntu 24.04.4 LTS (x86_64)"
+  ],
+  "last_verified": "2026-08-29",
+  "changes_system": true,
+  "sources": [
+    {
+      "title": "GNU ddrescue Manual",
+      "url": "https://www.gnu.org/software/ddrescue/manual/ddrescue_manual.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "man7.org — e2fsck(8)",
+      "url": "https://man7.org/linux/man-pages/man8/e2fsck.8.html",
+      "kind": "official"
+    },
+    {
+      "title": "smartmontools — smartctl(8)",
+      "url": "https://www.smartmontools.org/browser/trunk/smartmontools/smartctl.8.in",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD manual — fsck_ffs(8)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=fsck_ffs&sektion=8",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD manual — nda(4)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=nda&sektion=4",
+      "kind": "official"
+    }
+  ]
+}

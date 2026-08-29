@@ -28,7 +28,7 @@ phải GNU coreutils. Đổi qua lại:
     sudo apt install coreutils-from-gnu --allow-remove-essential
     sudo apt install coreutils-from-uutils --allow-remove-essential
 
-→ **Ảnh hưởng `post-003-doc-file-khong-can-editor`, `post-039-grep-sed-awk`** và
+→ **Ảnh hưởng `post-004-doc-file-khong-can-editor`, `post-040-grep-sed-awk`** và
 mọi bài dán output của lệnh coreutils. Cờ hiếm và định dạng output có thể khác GNU; bài nào dựa vào một cờ
 lạ thì phải nói rõ đang chạy bản nào.
 
@@ -44,7 +44,7 @@ Có giao diện lịch sử mới:
 
 APT cũng chuyển từ GnuTLS/gcrypt sang OpenSSL cho TLS và băm file.
 
-→ **Ảnh hưởng `post-009-cai-go-ghim-goi`** và **`post-010-kho-goi-va-khoa-gpg`**.
+→ **Ảnh hưởng `post-010-cai-go-ghim-goi`** và **`post-011-kho-goi-va-khoa-gpg`**.
 Bài cài/gỡ gói nên dạy `history-undo` — đó chính là mục "Gỡ / Hoàn tác" mà cổng
 nội dung đòi, và giờ nó có lệnh chính chủ.
 
@@ -66,20 +66,20 @@ khi viết — xem mục "Mốc systemd chung" ở dưới.
 Gói GSS-API tách riêng thành `openssh-client-gssapi` và `openssh-server-gssapi`.
 Các thuật toán `gss-group14-sha1-` và `gss-gex-sha1-` đã bị bỏ theo RFC 8732.
 
-→ **Ảnh hưởng `post-013-ssh-khoa-va-config`**.
+→ **Ảnh hưởng `post-014-ssh-khoa-va-config`**.
 
 ### Netplan 1.2 (từ 1.0)
 
 Có thiết lập riêng cho `systemd-networkd-wait-online`; cờ parser để bỏ qua cấu
 hình hỏng thay vì chết cả file.
 
-→ **Ảnh hưởng `post-025-cau-hinh-mang-tinh`** và **`post-029-mo-dong-cong`**.
+→ **Ảnh hưởng `post-026-cau-hinh-mang-tinh`** và **`post-030-mo-dong-cong`**.
 
 ### AppArmor
 
 Thêm nhiều profile mới cho ứng dụng, và có chế độ enforce.
 
-→ **Ảnh hưởng `post-030-selinux-apparmor`**.
+→ **Ảnh hưởng `post-031-selinux-apparmor`**.
 
 ### Khác
 
@@ -167,8 +167,8 @@ cùng. Ứng dụng 32-bit vẫn chạy được qua lớp tương thích trên 
 
 ### OpenZFS 2.4.0
 
-→ **Ảnh hưởng cả nhánh Lưu trữ (cấp 2)**, đặc biệt `post-019-zfs-co-ban`, và
-`post-034-snapshot-va-khoi-phuc`.
+→ **Ảnh hưởng cả nhánh Lưu trữ (cấp 2)**, đặc biệt `post-020-zfs-co-ban`, và
+`post-035-snapshot-va-khoi-phuc`.
 
 ---
 

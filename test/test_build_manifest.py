@@ -79,3 +79,35 @@ def test_moi_truong_renderer_doc_deu_co_trong_manifest():
         used |= set(PROPERTY_RE.findall(path.read_text(encoding="utf-8")))
     missing = sorted(used - NON_META - set(build_manifest.FIELDS))
     assert not missing, f"renderer đọc trường không có trong manifest: {missing}"
+
+
+def test_bien_moi_truong_chon_thu_muc_bai(tmp_path, monkeypatch):
+    """NIX_POSTS_DIR thay cho cờ --posts khi không truyền cờ vào được.
+
+    `wrangler dev` và `wrangler deploy` tự chạy build_manifest.py qua
+    build.command trong wrangler.jsonc, và không có chỗ nào truyền cờ. Trước khi
+    có biến này, bước dựng của wrangler luôn đọc content/posts/ và ghi đè
+    manifest mà `npm run dev:draft` vừa sinh — nên xem thử bản nháp trong trình
+    duyệt luôn ra 404, dù script chạy không báo lỗi gì.
+    """
+    src = Path(__file__).parent / "fixtures" / "post-001-vi-du"
+    posts = tmp_path / "nhap"
+    (posts / src.name).mkdir(parents=True)
+    for name in ("meta.json", "body.html"):
+        (posts / src.name / name).write_text(
+            (src / name).read_text(encoding="utf-8"), encoding="utf-8"
+        )
+
+    out = tmp_path / "manifest.json"
+    monkeypatch.setenv("NIX_POSTS_DIR", str(posts))
+    assert build_manifest.main(["--out", str(out)]) == 0
+    assert [p["slug"] for p in json.loads(out.read_text(encoding="utf-8"))["posts"]] == [src.name]
+
+
+def test_co_posts_thang_bien_moi_truong(tmp_path, monkeypatch):
+    """Cờ --posts truyền tay phải thắng biến môi trường."""
+    src = Path(__file__).parent / "fixtures"
+    monkeypatch.setenv("NIX_POSTS_DIR", str(tmp_path / "khong-ton-tai"))
+    out = tmp_path / "m.json"
+    assert build_manifest.main(["--posts", str(src), "--out", str(out)]) == 0
+    assert len(json.loads(out.read_text(encoding="utf-8"))["posts"]) == 3

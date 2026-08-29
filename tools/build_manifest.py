@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -37,7 +38,11 @@ def build(posts_dir: Path | None = None) -> dict:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--posts", default=None)
+    # `wrangler dev` và `wrangler deploy` tự chạy script này qua build.command
+    # trong wrangler.jsonc, và không có chỗ nào truyền cờ vào được. Không có biến
+    # môi trường này thì bước dựng của wrangler luôn đọc content/posts/ và ghi đè
+    # manifest mà `npm run dev:draft` vừa sinh ra — xem bản nháp thành ra không thể.
+    parser.add_argument("--posts", default=os.environ.get("NIX_POSTS_DIR") or None)
     parser.add_argument("--out", default=str(ROOT / "content" / "manifest.json"))
     args = parser.parse_args(argv)
 

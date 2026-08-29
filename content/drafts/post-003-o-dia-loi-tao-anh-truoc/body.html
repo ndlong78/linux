@@ -1,0 +1,229 @@
+<section class="objective"><h2>Mục tiêu</h2>
+<p>Một máy báo lỗi đọc file, hoặc không mount được phân vùng. Sau bài này bạn biết trả lời câu hỏi quyết định — <strong>đây là filesystem hỏng, hay phần cứng hỏng?</strong> — và biết làm theo thứ tự nào để câu trả lời sai không phải trả giá bằng dữ liệu.</p>
+<p>Thứ tự mới là nội dung của bài, không phải danh sách lệnh. Lý do rất đơn giản: <strong>mọi công cụ sửa filesystem đều ghi lên đĩa.</strong> Trên một ổ còn khoẻ, ghi là chuyện bình thường. Trên một ổ đang chết, mỗi lần ghi là một lần bắt phần cơ đang hỏng làm việc, và là một cơ hội để phần dữ liệu còn đọc được biến mất. Nên thứ tự đúng luôn là: chẩn phần cứng trước, tạo ảnh, rồi sửa <em>trên ảnh</em>.</p>
+<p>Cuối bài có một chuỗi lệnh chạy thật chứng minh điều đó: một filesystem bị phá superblock, được sửa thành công trên ảnh, trong khi ổ nguồn vẫn nguyên vẹn và chưa hề bị ghi vào lần nào.</p>
+</section>
+
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2>
+<ul>
+<li>Quyền quản trị trên máy đang xử lý.</li>
+<li><strong>Một ổ đích khác ổ nguồn</strong>, dung lượng trống ít nhất bằng ổ nguồn. Không có ổ này thì đừng bắt đầu — không có chỗ để ảnh thì cả quy trình vô nghĩa.</li>
+<li>Hai gói: <code>smartmontools</code> và <code>ddrescue</code>. Tên gói khác nhau giữa các hệ, xem bước 5.</li>
+<li>Bài #001, để biết mình đang đứng trên hệ nào — bài này rẽ nhánh khá nhiều giữa Linux và FreeBSD.</li>
+</ul>
+<p>Trên Ubuntu, Xubuntu, Debian và Fedora các bước Linux giống hệt nhau; chỗ khác duy nhất là tên gói khi cài.</p>
+</section>
+
+<section><h2>Các bước thực hiện</h2>
+<ol class="steps">
+
+<li>
+<p><strong>Xác định đúng ổ, bằng định danh không đổi.</strong> Tên <code>/dev/sda</code> do thứ tự dò thiết bị quyết định, và thứ tự đó đổi được sau một lần khởi động lại hoặc khi cắm thêm ổ. Dùng nhầm tên trong một lệnh ghi là mất ổ khác.</p>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">lsblk -o NAME,MODEL,SERIAL,SIZE,FSTYPE,LABEL,MOUNTPOINTS
+ls -l /dev/disk/by-id/</code></pre>
+<p>Ghi lại <code>SERIAL</code> vào sổ tay hoặc ticket ngay lúc này. Đó là thứ duy nhất theo ổ đi khắp nơi — qua mọi lần khởi động lại, qua cả khi bạn tháo ổ mang sang máy khác để cứu.</p>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">camcontrol devlist
+geom disk list
+gpart show</code></pre>
+<p>FreeBSD đặt tên theo lớp trình điều khiển chứ không theo một dãy chung: <code>ada0</code> cho SATA, <code>da0</code> cho USB và SCSI, <code>nda0</code> cho NVMe (tên <code>nvd0</code> là lối cũ). <code>camcontrol devlist</code> in ra cả tên thiết bị lẫn model và serial trong một dòng.</p>
+</li>
+
+<li>
+<p><strong>Hỏi kernel trước khi hỏi filesystem.</strong> Đây là bước bị bỏ qua nhiều nhất, và nó là bước rẻ nhất. Nếu kernel đã ghi nhận lỗi vào ra thì bạn <em>đã</em> có câu trả lời: phần cứng hỏng, và mọi công cụ sửa filesystem từ giờ đều là sai lầm.</p>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo journalctl -k -b -0 -p err --no-pager | tail -n 40
+sudo dmesg -T | grep -iE 'I/O error|Medium Error|UNC|failed command'</code></pre>
+<p>Ba chuỗi đáng sợ nhất trong kết quả: <code>I/O error</code>, <code>Medium Error</code>, <code>UNC</code> (uncorrectable). Thấy bất kỳ chuỗi nào trong ba chuỗi đó, kèm tên ổ bạn đang xử lý, thì nhảy thẳng tới bước 5.</p>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre class="bsd"><code class="language-bash">dmesg | grep -iE 'CAM status|Medium Error|READ_10|ATA_IDENTIFY'
+tail -n 200 /var/log/messages</code></pre>
+<p>Trên FreeBSD lỗi tầng dưới đi qua CAM, nên chuỗi cần tìm là <code>CAM status: ATA Status Error</code> hoặc <code>Medium Error</code>, kèm số lần thử lại.</p>
+</li>
+
+<li>
+<p><strong>Đọc SMART, và đọc cho đúng.</strong> SMART là nhật ký mà chính ổ tự ghi về sức khoẻ của nó. Dòng tổng kết <code>PASSED</code> gần như vô dụng — ổ chỉ báo <code>FAILED</code> khi đã hỏng tới mức không chối được. Thứ đáng đọc là bảng thuộc tính.</p>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo smartctl -a /dev/sda
+sudo smartctl -a -d sat /dev/sdb
+sudo smartctl -a -d nvme /dev/nvme0</code></pre>
+<p>Dòng 1 cho ổ SATA gắn trong. Dòng 2 cho ổ gắn qua hộp USB — cầu USB-SATA thường nuốt mất lệnh SMART, cờ <code>-d sat</code> ép gửi lệnh ATA xuyên qua nó. Dòng 3 cho NVMe.</p>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre class="bsd"><code class="language-bash">smartctl -a /dev/ada0
+nvmecontrol logpage -p 2 nvme0</code></pre>
+<p>Bẫy riêng của FreeBSD với NVMe: trỏ <code>smartctl</code> vào <code>/dev/nda0</code> sẽ hỏng với thông báo <code>INQUIRY failed</code>, vì <code>nda</code> là lớp đĩa chứ không phải lớp điều khiển. Dùng <code>/dev/nvme0</code>, hoặc dùng thẳng <code>nvmecontrol</code> có sẵn trong hệ nền.</p>
+<p>Bảng dưới là thứ để đối chiếu. Nguyên tắc chung: <strong>xét xu hướng, không xét con số tuyệt đối</strong> — một ổ có 4 sector đã tráo đổi và đứng yên hai năm thì khoẻ hơn hẳn một ổ vừa nhảy từ 0 lên 2 trong tuần này.</p>
+<table>
+<thead><tr><th>Thuộc tính</th><th>Điều kiện</th><th>Kết luận</th></tr></thead>
+<tbody>
+<tr><td><code>Current_Pending_Sector</code></td><td>lớn hơn 0</td><td>Phần cứng hỏng — tạo ảnh ngay</td></tr>
+<tr><td><code>Offline_Uncorrectable</code></td><td>lớn hơn 0</td><td>Phần cứng hỏng — tạo ảnh ngay</td></tr>
+<tr><td><code>Reallocated_Sector_Ct</code></td><td>đang tăng</td><td>Phần cứng hỏng — tạo ảnh ngay</td></tr>
+<tr><td><code>Reallocated_Sector_Ct</code></td><td>lớn hơn 0 nhưng đứng yên</td><td>Theo dõi, ghi số lại để lần sau so</td></tr>
+<tr><td><code>UDMA_CRC_Error_Count</code></td><td>lớn hơn 0</td><td>Lỗi cáp, không phải lỗi ổ</td></tr>
+<tr><td><code>Available_Spare</code> (NVMe)</td><td>dưới ngưỡng nhà sản xuất</td><td>Phần cứng hỏng — tạo ảnh ngay</td></tr>
+</tbody>
+</table>
+<p><code>UDMA_CRC_Error_Count</code> đáng nói riêng vì nó bị đọc sai thường xuyên nhất: nó đếm lỗi trên <em>đường truyền</em> giữa ổ và bo mạch, không phải lỗi trên mặt đĩa. Thay cáp, đổi cổng, đo lại. Số không tăng tiếp thì đã xong — thay ổ vì con số này là thay nhầm.</p>
+</li>
+
+<li>
+<p><strong>Dừng lại ở ngã ba.</strong> Đây là chỗ bài này tồn tại để phục vụ. Gộp kết quả của bước 2 và bước 3 rồi chọn <em>một</em> nhánh.</p>
+<table>
+<thead><tr><th>Kernel log</th><th>SMART</th><th>Làm gì</th></tr></thead>
+<tbody>
+<tr><td>có lỗi vào ra</td><td>bất kỳ</td><td>Tạo ảnh (bước 5). Không sửa gì trên ổ nguồn.</td></tr>
+<tr><td>sạch</td><td>pending/uncorrectable lớn hơn 0</td><td>Tạo ảnh (bước 5).</td></tr>
+<tr><td>sạch</td><td>sạch</td><td>Phần cứng ổn. Vẫn nên tạo ảnh nếu dữ liệu quan trọng, rồi sửa (bước 6).</td></tr>
+</tbody>
+</table>
+<p>Chú ý dòng cuối: ngay cả khi phần cứng sạch, tạo ảnh vẫn là việc nên làm. Nó biến một thao tác không hoàn tác được thành một thao tác hoàn tác được, và tốn của bạn đúng thời gian copy.</p>
+</li>
+
+<li>
+<p><strong>Tạo ảnh bằng ddrescue, hai lượt.</strong> Đừng dùng <code>dd</code>: gặp sector lỗi là <code>dd</code> dừng hoặc chèn số không mà không ghi lại chỗ nào hỏng. <code>ddrescue</code> vét phần đọc được trước, ghi bản đồ, rồi mới quay lại gặm những chỗ khó.</p>
+<p>Tên gói khác nhau, tên lệnh thì không:</p>
+<table>
+<thead><tr><th>Hệ</th><th>Cài</th><th>Lệnh</th></tr></thead>
+<tbody>
+<tr><td>Ubuntu, Xubuntu, Debian</td><td><code>apt install gddrescue</code></td><td><code>ddrescue</code></td></tr>
+<tr><td>Fedora</td><td><code>dnf install ddrescue</code></td><td><code>ddrescue</code></td></tr>
+<tr><td>FreeBSD</td><td><code>pkg install ddrescue</code></td><td><code>ddrescue</code></td></tr>
+</tbody>
+</table>
+<p>Gói trên Debian và Ubuntu tên <code>gddrescue</code> vì đã có một gói khác chiếm mất tên <code>ddrescue</code>. Gõ <code>apt install ddrescue</code> sẽ cài nhầm một chương trình khác hẳn.</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo umount /dev/sda2 2>/dev/null || true
+sudo ddrescue -n -d /dev/sda2 /mnt/dich/anh.img /mnt/dich/anh.map
+sudo ddrescue -d -r3 /dev/sda2 /mnt/dich/anh.img /mnt/dich/anh.map
+sudo ddrescuelog -t /mnt/dich/anh.map</code></pre>
+<p>Lượt một có <code>-n</code>: bỏ qua mọi chỗ khó, vét thật nhanh phần còn lành. Trên ổ sắp chết, tốc độ chính là xác suất — mỗi phút ổ còn quay là một phần dữ liệu nữa được cứu. Lượt hai bỏ <code>-n</code> và thêm <code>-r3</code> để thử lại ba lần ở những chỗ vừa bỏ qua.</p>
+<p>File <code>.map</code> là thứ khiến quy trình này khác một lệnh copy: nó ghi lại chính xác vùng nào đã đọc được. Ngắt giữa chừng rồi chạy lại, <code>ddrescue</code> tiếp tục từ chỗ cũ chứ không làm lại từ đầu. <strong>Mất file map là mất khả năng tiếp tục.</strong></p>
+</li>
+
+<li>
+<p><strong>Sửa trên ảnh, không sửa trên ổ.</strong> Từ đây trở đi ổ nguồn có thể rút ra cất đi. Mọi thao tác còn lại diễn ra trên file ảnh.</p>
+<p>Trước khi sửa, giữ một bản ảnh gốc. Lệnh sửa filesystem không hoàn tác được, nên bản sao này chính là nút hoàn tác của bạn:</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo cp --reflink=auto /mnt/dich/anh.img /mnt/dich/anh.img.goc</code></pre>
+<p>Kiểm tra ở chế độ chỉ đọc trước, để biết mình sắp đối mặt với cái gì:</p>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo fsck.ext4 -n /mnt/dich/anh.img</code></pre>
+<p>Nếu báo <code>Bad magic number in super-block</code> thì superblock chính đã mất. Filesystem ext4 giữ nhiều bản dự phòng — vấn đề là hỏi vị trí của chúng bằng cách nào, khi bản chính không còn đọc được.</p>
+<p><code>dumpe2fs</code> không dùng được ở đây: nó cần chính cái superblock vừa mất mới mở được filesystem. Lệnh đúng là <code>mke2fs -n</code>, nó <em>tính</em> vị trí bản dự phòng từ hình học của filesystem chứ không đọc, nên chạy được ngay cả trên một ảnh đã hỏng:</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo mke2fs -n /mnt/dich/anh.img
+sudo e2fsck -b 32768 -y /mnt/dich/anh.img</code></pre>
+<p><strong>Cờ <code>-n</code> là thứ duy nhất ngăn lệnh đó định dạng lại ảnh của bạn.</strong> Gõ thiếu một ký tự ở đây là mất sạch. Đọc lại dòng lệnh trước khi Enter — và để ý là FreeBSD có đúng cặp bẫy này ở dạng ngược lại, xem ngay dưới.</p>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre class="bsd"><code class="language-bash">fsck_ffs -n /mnt/dich/anh.img
+newfs -N /dev/ada0p2
+fsck_ffs -b 160 /mnt/dich/anh.img</code></pre>
+<p>UFS cũng có superblock dự phòng, và <code>newfs -N</code> in ra vị trí của chúng mà <em>không</em> tạo filesystem mới — vai trò y hệt <code>mke2fs -n</code> bên ext4. Với UFS2, offset thường dùng là 160; với UFS1 là 32.</p>
+<p>Bẫy ở đây ngược với bên Linux và đáng nhớ vì thế: bên ext4 chữ an toàn là <code>-n</code> thường, còn bên UFS chữ an toàn là <code>-N</code> <em>hoa</em>. Gõ <code>newfs -n</code> thường trên FreeBSD là một lệnh khác hẳn và nó sẽ ghi đè. Hai hệ, hai chữ cái, ngược nhau.</p>
+</li>
+
+<li>
+<p><strong>Lấy dữ liệu ra, rồi mới kết luận.</strong> Sửa xong không có nghĩa dữ liệu còn nguyên.</p>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo mkdir -p /mnt/anh
+sudo mount -o loop,ro /mnt/dich/anh.img /mnt/anh
+find /mnt/anh -type f | wc -l
+ls -la /mnt/anh/lost+found/ | head</code></pre>
+<p>Thư mục <code>lost+found</code> chứa những file mà <code>e2fsck</code> tìm thấy nội dung nhưng mất tên. Chúng được đặt tên theo số inode. Với người dùng cuối thì đó là những file cần mở ra xem mới biết là gì — nhưng chúng là dữ liệu thật, đừng xoá.</p>
+</li>
+
+</ol>
+</section>
+
+<section><h2>Kiểm chứng</h2>
+<p><strong>Expected Output</strong> — toàn bộ phần dưới đây chạy thật trên Ubuntu 24.04.4, trên một filesystem ext4 300 MB dựng bằng file và loop device, chứa 41 tệp. Không phải ổ hỏng thật: kernel của máy soạn bài không có device-mapper nên không dựng được sector lỗi giả. Vì thế phần <em>tạo ảnh</em> và phần <em>sửa filesystem</em> là số đo, còn phần SMART trên ổ hỏng thì chưa.</p>
+<p>Bước 5, tạo ảnh từ thiết bị:</p>
+<pre><code class="language-text">non-tried:        0 B,  bad-sector:        0 B,    error rate:       0 B/s
+  rescued:  314572 kB,   bad areas:        0,        run time:          3s
+pct rescued:  100.00%, read errors:        0,  remaining time:         n/a
+
+Finished</code></pre>
+<p><code>ddrescuelog -t</code> đọc bản đồ và tổng kết. Đây là số bạn dùng để quyết định có dừng được chưa:</p>
+<pre><code class="language-text">   current pos:  314507 kB,  current status: finished
+mapfile extent:  314572 kB,  in      1 area(s)
+
+     non-tried:        0 B,  in      0 area(s)  (  0%)
+       rescued:  314572 kB,  in      1 area(s)  (100%)
+   non-trimmed:        0 B,  in      0 area(s)  (  0%)
+    bad-sector:        0 B,  in      0 area(s)  (  0%)</code></pre>
+<p>Tiếp theo là phần chứng minh luận điểm của bài. Superblock chính của <strong>ảnh</strong> bị xoá, rồi <code>fsck.ext4 -n</code> chạy trên ảnh:</p>
+<pre><code class="language-text">e2fsck 1.47.0 (5-Feb-2023)
+ext2fs_open2: Bad magic number in super-block
+fsck.ext4: Superblock invalid, trying backup blocks...
+DULIEU was not cleanly unmounted, check forced.</code></pre>
+<p>Hỏi vị trí bản dự phòng bằng <code>mke2fs -n</code> — chú ý nó chạy được dù superblock chính đã mất:</p>
+<pre><code class="language-text">Creating filesystem with 76800 4k blocks and 76800 inodes
+Superblock backups stored on blocks:
+	32768</code></pre>
+<p>Rồi sửa bằng đúng con số đó:</p>
+<pre><code class="language-text">DULIEU: ***** FILE SYSTEM WAS MODIFIED *****
+DULIEU: 52/76800 files (0.0% non-contiguous), 11547/76800 blocks</code></pre>
+<p>Mount ảnh đã sửa, đếm tệp, đọc thử một tệp:</p>
+<pre><code class="language-text">41
+noi dung quan trong</code></pre>
+<p>Và đây là dòng quan trọng nhất của cả bài — chạy <code>fsck</code> ở chế độ chỉ đọc trên <strong>ổ nguồn</strong>, sau khi đã sửa xong trên ảnh:</p>
+<pre><code class="language-text">DULIEU: clean, 52/76800 files, 11547/76800 blocks</code></pre>
+<p>Ổ nguồn sạch. Nó chưa bị ghi vào lần nào trong suốt quy trình. Nếu lần sửa vừa rồi làm hỏng thêm, bạn xoá file ảnh và bắt đầu lại từ ổ nguồn — vẫn còn nguyên cơ hội thứ hai. Đó là toàn bộ lý do tạo ảnh đứng trước sửa.</p>
+<p>Một chi tiết bắt được lúc chạy thử và đáng nhớ: bản dựng đầu tiên chỉ 64 MB, và <code>dumpe2fs</code> báo <code>Primary superblock at 0</code> — <strong>không có dòng backup nào</strong>. Filesystem nhỏ hơn một block group thì không có superblock dự phòng, nên mất superblock chính là mất luôn. Ảnh 300 MB mới có bản dự phòng ở block 32768.</p>
+</section>
+
+<section><h2>Gỡ / Hoàn tác</h2>
+<p>Phải nói thẳng: <strong><code>e2fsck</code> và <code>fsck_ffs</code> không hoàn tác được.</strong> Không có cờ nào, không có nhật ký nào để quay lui. Khi chúng ghi xong thì trạng thái cũ đã biến mất.</p>
+<p>Vì vậy nút hoàn tác của quy trình này không phải là một lệnh mà là bản sao ở bước 6:</p>
+<p class="code-label same"><span class="dot"></span>Linux và FreeBSD</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo rm -f /mnt/dich/anh.img
+sudo cp --reflink=auto /mnt/dich/anh.img.goc /mnt/dich/anh.img</code></pre>
+<p>Chép lại bản gốc là quay về đúng trạng thái trước khi sửa, và thử một hướng khác.</p>
+<p>Những bước còn lại trong bài đều không sửa gì: bước 1 tới 4 chỉ đọc, bước 5 chỉ ghi vào ổ đích, bước 7 mount ở chế độ chỉ đọc. Muốn dọn sạch dấu vết thì gỡ mount và xoá thư mục tạm:</p>
+<p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo umount /mnt/anh 2>/dev/null || true
+sudo rmdir /mnt/anh</code></pre>
+<p>Riêng file ảnh và file map thì giữ lại cho tới khi người dùng xác nhận đã lấy đủ dữ liệu. Xoá sớm là mất lần thử thứ hai.</p>
+</section>
+
+<section><h2>Lưu ý &amp; Khắc phục lỗi</h2>
+
+<p><strong>Mã thoát của <code>smartctl</code> là bitmask, không phải đúng-sai.</strong> Nó khác 0 khi ổ có bất kỳ dấu hiệu nào đáng chú ý, kể cả những dấu hiệu vô hại. Script nào viết <code>if smartctl -a "$d"; then</code> sẽ hiểu sai gần như mọi ổ đã dùng lâu. Đọc từng bit theo tài liệu, hoặc so từng thuộc tính như bảng ở bước 3.</p>
+
+<p><strong>Ổ gắn qua hộp USB thường không trả SMART.</strong> Cầu USB-SATA nuốt lệnh ATA. Thử <code>-d sat</code> trước, rồi <code>-d sat,12</code>, rồi <code>-d usbjmicron</code> tuỳ chip trong hộp. Không cái nào chạy thì tháo ổ ra, cắm thẳng vào cổng SATA — thông tin SMART đáng công tháo máy.</p>
+
+<p><strong>Không có superblock dự phòng nếu filesystem quá nhỏ.</strong> Đã gặp trong lúc soạn bài này: ảnh 64 MB nhỏ hơn một block group nên <code>dumpe2fs</code> chỉ in đúng một dòng <code>Primary superblock at 0</code> — mất bản chính là mất luôn. Kiểm điều này <em>lúc filesystem còn lành</em>, vì <code>dumpe2fs</code> cần đọc được superblock chính mới chạy; khi đã hỏng thì chỉ còn <code>mke2fs -n</code> dùng được.</p>
+
+<p><strong>Đích không được nằm trên ổ nguồn.</strong> Nghe hiển nhiên, nhưng nhầm lẫn xảy ra khi ổ đích được mount vào một thư mục nằm sâu và không ai kiểm lại. Xác nhận bằng <code>findmnt -no SOURCE --target /mnt/dich</code> trên Linux, hoặc <code>df /mnt/dich</code> trên FreeBSD, trước khi chạy <code>ddrescue</code>.</p>
+
+<p><strong>Đừng chạy công cụ dò phân vùng lên ổ gốc.</strong> Chúng ghi lại bảng phân vùng. Nếu cần tới chúng thì chạy trên file ảnh — ảnh chính là chỗ để thử những thao tác không hoàn tác được.</p>
+
+<p><strong>Ổ phát ra tiếng kêu cơ khí thì dừng lại.</strong> Tiếng lách cách đều đặn nghĩa là đầu đọc đang không định vị được. Mỗi lần cấp điện thêm là một lần rủi ro làm xước mặt đĩa. Nếu dữ liệu đủ quan trọng để cân nhắc dịch vụ cứu dữ liệu, thì thời điểm đúng để dừng là ngay lúc nghe thấy tiếng đó — không phải sau khi đã thử thêm năm lần.</p>
+
+<p><strong>Bốn distro Linux hành xử như nhau ở bài này.</strong> Ubuntu, Xubuntu, Debian và Fedora dùng chung <code>e2fsck</code>, <code>ddrescue</code> và <code>smartctl</code>; khác biệt duy nhất là tên gói lúc cài. FreeBSD khác thật sự — khác tên thiết bị, khác filesystem mặc định (UFS chứ không phải ext4), và khác công cụ đọc SMART cho NVMe.</p>
+
+</section>
+
+<section class="exercise"><h2>Bài tập tự luyện</h2>
+<ol>
+<li>Dựng lại thí nghiệm ở mục Kiểm chứng bằng file và loop device: tạo một ảnh 300 MB, định dạng ext4, chép vài tệp vào, tạo ảnh bằng <code>ddrescue</code>, xoá superblock chính của <em>ảnh</em>, rồi sửa bằng bản dự phòng. Đếm số tệp trước và sau.</li>
+<li>Lặp lại với ảnh 64 MB. Giải thích vì sao lần này không cứu được, và cho biết ngưỡng dung lượng nhỏ nhất để một filesystem ext4 có superblock dự phòng.</li>
+<li>Chạy <code>smartctl -a</code> trên một ổ thật rồi ghi lại ba giá trị: <code>Reallocated_Sector_Ct</code>, <code>Current_Pending_Sector</code>, <code>Power_On_Hours</code>. Đo lại sau một tháng. Giá trị nào trong ba giá trị đó nói lên điều gì nếu nó tăng?</li>
+<li>Ngắt <code>ddrescue</code> giữa chừng bằng Ctrl+C rồi chạy lại đúng lệnh đó. Đọc <code>ddrescuelog -t</code> trước và sau, chỉ ra con số nào chứng minh nó tiếp tục chứ không làm lại từ đầu.</li>
+<li>Nếu có máy FreeBSD: chạy <code>newfs -N</code> trên một phân vùng UFS và tìm vị trí các superblock dự phòng. So với đầu ra của <code>dumpe2fs</code> trên ext4 — hai hệ thống tập tin đặt bản dự phòng theo cách khác nhau ở điểm nào?</li>
+</ol>
+</section>
