@@ -75,3 +75,76 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+
+  # Kiểm tra bản đã lên thật, không phải bản dựng được trên runner.
+  #
+  # Hai thứ chỉ hỏng ở ngoài đời và không cổng nào bắt được: đường dẫn asset sai
+  # (trang vẫn 200, chỉ là không có CSS), và Cloudflare ghi đè /robots.txt bằng
+  # bản quản lý trong dashboard — lúc đó cờ `noindex` trong site.json không tới
+  # được bot mà repo hoàn toàn không biết.
+  #
+  # Job này đỏ nghĩa là site thật đang khác điều repo nói. Nó chạy SAU deploy nên
+  # không chặn việc lên bài; nó chỉ không cho sự lệch đó đi qua trong im lặng.
+  kiem-tra-that:
+    name: Kiểm tra site thật
+    needs: deploy
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Domain đọc từ site.json chứ không viết cứng: đổi domain vẫn là đổi đúng
+      # một giá trị, kể cả với bước kiểm tra này.
+      - name: Lấy domain từ site.json
+        id: site
+        run: |
+          url=$(python3 -c "import json; print(json.load(open('site.json'))['url'].rstrip('/'))")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Kiểm tra: $url"
+
+      - name: Trang chủ trả 200
+        run: |
+          code=$(curl -sS --retry 5 --retry-delay 3 --retry-all-errors \
+                 -o /tmp/home.html -w '%{http_code}' "${{ steps.site.outputs.url }}/")
+          echo "HTTP $code"
+          test "$code" = "200"
+
+      - name: CSS phục vụ ở /style.css
+        run: |
+          out=$(curl -sS -o /dev/null -w '%{http_code} %{content_type}' \
+                "${{ steps.site.outputs.url }}/style.css")
+          echo "$out"
+          case "$out" in
+            200*text/css*) ;;
+            *) echo "::error::/style.css không phải CSS. Workers ánh xạ assets/ vào GỐC URL — trang vẫn 200 nhưng không có kiểu dáng."; exit 1 ;;
+          esac
+
+      - name: robots.txt là bản do Worker sinh
+        run: |
+          curl -sS -o /tmp/robots.txt "${{ steps.site.outputs.url }}/robots.txt"
+          echo '--- nội dung đang được phục vụ ---'
+          cat /tmp/robots.txt
+          echo '---'
+          if grep -qi 'content-signal' /tmp/robots.txt; then
+            echo "::error::robots.txt đang do Cloudflare quản lý, không phải bản Worker sinh ra. Tắt nó trong dashboard của domain (AI Crawl Control / robots.txt), nếu không cờ noindex trong site.json không tới được bot."
+            exit 1
+          fi
+
+      - name: robots.txt khớp cờ noindex trong site.json
+        run: |
+          noindex=$(python3 -c "import json; print(json.load(open('site.json'))['noindex'])")
+          echo "site.json noindex = $noindex"
+          if [ "$noindex" = "True" ]; then
+            grep -q '^Disallow: /' /tmp/robots.txt
+          else
+            grep -q '^Allow: /' /tmp/robots.txt
+            grep -q '^Sitemap: ' /tmp/robots.txt
+          fi
+
+      - name: Bài mới nhất mở được
+        run: |
+          slug=$(python3 tools/latest_slug.py)
+          code=$(curl -sS -o /dev/null -w '%{http_code}' \
+                 "${{ steps.site.outputs.url }}/posts/$slug")
+          echo "$slug -> HTTP $code"
+          test "$code" = "200"

@@ -357,7 +357,18 @@ tắt ở một chỗ, không sửa từng trang.
 Riêng trang 404 luôn `noindex` bất kể cờ, vì trang lỗi không bao giờ đáng vào
 kết quả tìm kiếm.
 
-**Cloudflare có thể ghi đè `/robots.txt` của Worker.** Nếu `curl https://nix.no.id.vn/robots.txt`
-trả về nội dung có khối `Content-Signal` mà repo này không hề sinh ra, thì đó là
-robots.txt do Cloudflare quản lý, bật trong dashboard (Security → Settings, hoặc
-mục AI Crawl Control). Tắt nó ở đó thì bản của Worker mới tới được bot.
+**Cloudflare có thể ghi đè `/robots.txt` của Worker.** Nếu trang trả về nội dung
+có dòng `Content-Signal` mà repo này không hề sinh ra, thì đó là robots.txt do
+Cloudflare quản lý, bật trong dashboard (Security → Settings, hoặc mục AI Crawl
+Control). Tắt nó ở đó thì bản của Worker mới tới được bot.
+
+Việc này không còn phải nhớ tự kiểm: job **Kiểm tra site thật** chạy sau mỗi lần
+deploy và hỏi thẳng domain thật. Nó đỏ khi site đang khác điều repo nói.
+
+Job đó kiểm hai thứ mà không cổng nào chạy trên runner bắt được:
+
+- **`/style.css` có đúng là CSS không.** Workers ánh xạ `assets/` vào gốc URL, nên
+  đường dẫn sai vẫn cho trang 200 — chỉ là không có kiểu dáng. Đã xảy ra một lần.
+- **`/robots.txt` có phải bản Worker sinh không.** Lưu ý bản của Cloudflare *cũng*
+  chứa `Allow: /`, nên chỉ so nội dung với cờ `noindex` là không đủ; phép kiểm
+  quyết định là tìm chuỗi `Content-Signal`.
