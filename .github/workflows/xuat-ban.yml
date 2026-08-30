@@ -85,6 +85,12 @@ jobs:
   #
   # Job này đỏ nghĩa là site thật đang khác điều repo nói. Nó chạy SAU deploy nên
   # không chặn việc lên bài; nó chỉ không cho sự lệch đó đi qua trong im lặng.
+  #
+  # Mọi phép kiểm mang `if: always()` và chỉ đọc file đã tải sẵn, nên chúng độc
+  # lập với nhau. Lần chạy đầu tiên cho thấy vì sao điều đó cần thiết: bước
+  # robots.txt đỏ đã làm hai bước sau bị bỏ qua, tức là một sự cố phía Cloudflare
+  # — thứ có thể mất vài ngày mới xử lý xong — che mất đúng những phép kiểm bắt
+  # lỗi phía repo.
   kiem-tra-that:
     name: Kiểm tra site thật
     needs: deploy
@@ -102,17 +108,40 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Kiểm tra: $url"
 
-      - name: Trang chủ trả 200
+      # Gom mọi lần gọi mạng vào một bước và KHÔNG để bước này đỏ. Mỗi phép kiểm
+      # bên dưới chỉ đọc file, nên chúng không kéo nhau ngã theo.
+      - name: Tải về những gì cần kiểm
+        id: tai
+        if: always() && steps.site.outputs.url != ''
         run: |
-          code=$(curl -sS --retry 5 --retry-delay 3 --retry-all-errors \
-                 -o /tmp/home.html -w '%{http_code}' "${{ steps.site.outputs.url }}/")
+          url="${{ steps.site.outputs.url }}"
+          curl -sS --retry 5 --retry-delay 3 --retry-all-errors \
+               -o /tmp/home.html -w '%{http_code}' "$url/" > /tmp/home.code || echo 000 > /tmp/home.code
+          curl -sS -o /dev/null -w '%{http_code} %{content_type}' \
+               "$url/style.css" > /tmp/css.info || echo '000 -' > /tmp/css.info
+          curl -sS -o /tmp/robots.txt -w '%{http_code}' \
+               "$url/robots.txt" > /tmp/robots.code || echo 000 > /tmp/robots.code
+          slug=$(python3 tools/latest_slug.py)
+          echo "$slug" > /tmp/slug
+          curl -sS -o /dev/null -w '%{http_code}' \
+               "$url/posts/$slug" > /tmp/post.code || echo 000 > /tmp/post.code
+          echo "--- /robots.txt đang được phục vụ ---"
+          cat /tmp/robots.txt || true
+          echo "--- hết ---"
+
+      - name: Trang chủ trả 200
+        id: home
+        if: always() && steps.tai.conclusion == 'success'
+        run: |
+          code=$(cat /tmp/home.code)
           echo "HTTP $code"
           test "$code" = "200"
 
       - name: CSS phục vụ ở /style.css
+        id: css
+        if: always() && steps.tai.conclusion == 'success'
         run: |
-          out=$(curl -sS -o /dev/null -w '%{http_code} %{content_type}' \
-                "${{ steps.site.outputs.url }}/style.css")
+          out=$(cat /tmp/css.info)
           echo "$out"
           case "$out" in
             200*text/css*) ;;
@@ -120,17 +149,22 @@ jobs:
           esac
 
       - name: robots.txt là bản do Worker sinh
+        id: robots_worker
+        if: always() && steps.tai.conclusion == 'success'
         run: |
-          curl -sS -o /tmp/robots.txt "${{ steps.site.outputs.url }}/robots.txt"
-          echo '--- nội dung đang được phục vụ ---'
-          cat /tmp/robots.txt
-          echo '---'
+          test "$(cat /tmp/robots.code)" = "200"
           if grep -qi 'content-signal' /tmp/robots.txt; then
             echo "::error::robots.txt đang do Cloudflare quản lý, không phải bản Worker sinh ra. Tắt nó trong dashboard của domain (AI Crawl Control / robots.txt), nếu không cờ noindex trong site.json không tới được bot."
             exit 1
           fi
+          echo "Đúng bản Worker."
 
+      # Tách khỏi phép kiểm trên, vì bản robots.txt của Cloudflare CŨNG chứa
+      # "Allow: /". Chỉ so nội dung với cờ noindex thì sẽ xanh trong khi file
+      # thực chất không phải của Worker — hai phép kiểm bắt hai chuyện khác nhau.
       - name: robots.txt khớp cờ noindex trong site.json
+        id: robots_flag
+        if: always() && steps.tai.conclusion == 'success'
         run: |
           noindex=$(python3 -c "import json; print(json.load(open('site.json'))['noindex'])")
           echo "site.json noindex = $noindex"
@@ -142,9 +176,24 @@ jobs:
           fi
 
       - name: Bài mới nhất mở được
+        id: bai
+        if: always() && steps.tai.conclusion == 'success'
         run: |
-          slug=$(python3 tools/latest_slug.py)
-          code=$(curl -sS -o /dev/null -w '%{http_code}' \
-                 "${{ steps.site.outputs.url }}/posts/$slug")
-          echo "$slug -> HTTP $code"
-          test "$code" = "200"
+          echo "$(cat /tmp/slug) -> HTTP $(cat /tmp/post.code)"
+          test "$(cat /tmp/post.code)" = "200"
+
+      # Đọc được toàn cảnh mà không phải cuộn log, và nói rõ cái nào sửa ở repo
+      # còn cái nào sửa ở dashboard.
+      - name: Tổng kết
+        if: always()
+        run: |
+          printf '%-42s %s\n' 'Trang chủ trả 200'          '${{ steps.home.outcome }}'
+          printf '%-42s %s\n' 'CSS phục vụ ở /style.css'   '${{ steps.css.outcome }}'
+          printf '%-42s %s\n' 'robots.txt là bản Worker'   '${{ steps.robots_worker.outcome }}'
+          printf '%-42s %s\n' 'robots.txt khớp cờ noindex' '${{ steps.robots_flag.outcome }}'
+          printf '%-42s %s\n' 'Bài mới nhất mở được'       '${{ steps.bai.outcome }}'
+          if [ '${{ steps.robots_worker.outcome }}' = 'failure' ]; then
+            echo
+            echo 'Sửa ở dashboard Cloudflare, không sửa được từ repo:'
+            echo '  domain nix.no.id.vn -> AI Crawl Control -> tắt robots.txt quản lý'
+          fi
