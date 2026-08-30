@@ -372,3 +372,10 @@ Job đó kiểm hai thứ mà không cổng nào chạy trên runner bắt đư�
 - **`/robots.txt` có phải bản Worker sinh không.** Lưu ý bản của Cloudflare *cũng*
   chứa `Allow: /`, nên chỉ so nội dung với cờ `noindex` là không đủ; phép kiểm
   quyết định là tìm chuỗi `Content-Signal`.
+
+Mọi phép kiểm chạy độc lập với nhau: phần gọi mạng gom vào một bước, các bước
+khẳng định chỉ đọc file đã tải và đều mang `if: always()`. Lý do rất cụ thể —
+lần chạy đầu tiên, bước `robots.txt` đỏ đã làm hai bước sau bị bỏ qua, tức là
+một sự cố nằm ở dashboard Cloudflare che mất đúng những phép kiểm bắt lỗi phía
+repo. Bước **Tổng kết** in lại toàn bộ trạng thái và nói rõ cái nào sửa ở repo,
+cái nào sửa ở dashboard.
