@@ -10,7 +10,7 @@
     "predev": "npm run manifest",
     "dev": "wrangler dev",
     "dev:draft": "NIX_POSTS_DIR=content/drafts wrangler dev",
-    "gate": "python3 tools/validate_content.py && python3 -m pytest test -q && npm test && npm run build && python3 tools/check_links.py --allow-unknown",
+    "gate": "python3 tools/repo_hygiene.py && python3 tools/validate_content.py && python3 -m pytest test -q && npm test && npm run build && python3 tools/check_links.py --allow-unknown",
     "gate:draft": "python3 tools/validate_content.py --posts content/drafts --allow-draft && python3 tools/check_links.py --posts content/drafts --allow-unknown",
     "links": "python3 tools/check_links.py",
     "links:draft": "python3 tools/check_links.py --posts content/drafts",
