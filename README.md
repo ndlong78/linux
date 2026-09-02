@@ -3,9 +3,14 @@
 Series bài học Linux/Unix system administration bằng tiếng Việt, render tại request
 bằng Cloudflare Workers. Không có file HTML dẫn xuất nào trong git.
 
-Chạy trên `nix.no.id.vn`. Bản static tiền nhiệm là
-[`ndlong78/linux-daily`](https://github.com/ndlong78/linux-daily), vẫn đang phục vụ
-trên `linux.no.id.vn`. Repo này bắt đầu lại từ đầu về nội dung.
+Chạy trên `linux.no.id.vn` — tên miền duy nhất của series. Bản static tiền nhiệm là
+[`ndlong78/linux-daily`](https://github.com/ndlong78/linux-daily); repo này tiếp quản
+tên miền đó và bắt đầu lại từ đầu về nội dung.
+
+Đổi tên miền là đổi đúng một giá trị: `site.json.url`. Mọi trang, feed, sitemap và
+cả bước kiểm site thật đều đọc từ đó — không có domain nào viết cứng trong code hay
+trong test. `wrangler.jsonc` khai lại cùng tên miền để bản deploy tự nói nó phục vụ
+ở đâu; hai chỗ này phải khớp nhau.
 
 ## Vì sao dynamic
 
@@ -349,8 +354,8 @@ cho khớp với những gì bạn vừa chạy, và chạy `npm run gate`.
 
 ## Cho phép lập chỉ mục
 
-`site.json` đặt `noindex: false`: `nix.no.id.vn` đã tiếp quản hẳn nên không còn
-hai domain cùng nội dung để lo duplicate content. Cờ này điều khiển hai chỗ cùng
+`site.json` đặt `noindex: false`: chỉ còn một tên miền phục vụ series nên không
+còn hai domain cùng nội dung để lo duplicate content. Cờ này điều khiển hai chỗ cùng
 lúc — thẻ `<meta name="robots">` ở mọi trang và nội dung `/robots.txt` — nên bật
 tắt ở một chỗ, không sửa từng trang.
 

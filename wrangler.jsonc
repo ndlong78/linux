@@ -7,7 +7,7 @@
   // Domain nằm trong git, không nằm trong dashboard. Bản deploy tự khai nó phục
   // vụ ở đâu, và `wrangler deploy` in ra domain đó — thay vì phải mở dashboard
   // mới biết bản vừa lên có tới được người đọc hay không.
-  "routes": [{ "pattern": "nix.no.id.vn", "custom_domain": true }],
+  "routes": [{ "pattern": "linux.no.id.vn", "custom_domain": true }],
 
   // Cùng một nội dung ở ba địa chỉ — custom domain, workers.dev, và một Preview
   // URL cho mỗi version — là ba bản trùng nhau của chính mình. Đúng thứ mà cờ

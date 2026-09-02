@@ -195,5 +195,5 @@ jobs:
           if [ '${{ steps.robots_worker.outcome }}' = 'failure' ]; then
             echo
             echo 'Sửa ở dashboard Cloudflare, không sửa được từ repo:'
-            echo '  domain nix.no.id.vn -> AI Crawl Control -> tắt robots.txt quản lý'
+            echo '  domain linux.no.id.vn -> AI Crawl Control -> tắt robots.txt quản lý'
           fi
